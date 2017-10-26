@@ -11,7 +11,7 @@ def busca():
 		chave, RRN = linha.split(',') #quebra a string em duas strings utilizando a ',' como separador
 		if(chave_busca == chave):
 			RRN = int(RRN) #transforma a string RRN em um inteiro
-			arquivo_de_dados.seek((TAM_REGISTRO*RRN),0) #posiciona para a posicao de inicio do registro encontrado
+			arquivo_de_dados.seek((TAM_REGISTRO*RRN + arquivo_de_dados.getHeader().getSize()),0) #posiciona para a posicao de inicio do registro encontrado
 			registro = arquivo_de_dados.read(TAM_REGISTRO) #lê o registro
 			print(registro) #mostra o registro encontrado na tela
 			break #interrompe o loop e impede que outras ocorrencias de mesma chave sejam apresentadas
