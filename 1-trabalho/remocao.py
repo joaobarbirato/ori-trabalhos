@@ -10,15 +10,18 @@ def remocao1(lf, reg):
     while(indice.read(TAM_REG_INDICE) == None and !achei): # loop do arquivo de índice
         indice.seek(-TAM_REG_INDICE, 1) # em relação ao atual
         i = indice.read(TAM_REGISTRO)
-        lf.seek(0,0)
         r = lf.read(TAM_REGISTRO * i.getRRN() + lf.getHeader().getSize(), 0) # em relação ao primeiro
-        if(r = reg):
+        if(r == reg):
             achei = True
     # retorno
     if(!achei)
         print("Nao há esse registro.")
     else: # se achei o registro
+        aux = lf.getHeader().pop()
+        lf.write('@' + chr(aux))
+        lf.getHeader().push(aux)
         lf.getHeader().push(i.getRRN()) # atualiza a lista invertida
+        lf.seek(TAM_REGISTRO*i.getRRN() + lf.getHeader().getSize(), 0)
         return reg
 
 
