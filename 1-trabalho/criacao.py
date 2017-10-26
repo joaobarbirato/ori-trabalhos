@@ -1,5 +1,5 @@
 TAM_REGISTRO = 100
 
 def criacao():
-	arquivo = open("arquivo_indice", 'w')
-	arquivo = open("arquivo_de_dados", 'w')
+	arquivo_indice = open("arquivo_indice", 'w')
+	arquivo_de_dados = open("arquivo_de_dados", 'w')
