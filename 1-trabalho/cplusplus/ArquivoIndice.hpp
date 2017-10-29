@@ -7,11 +7,18 @@ typedef struct{
     int rrn;
 } registroIndice;
 
-const TAM_REG_INDICE = 15;
+const int TAM_REG_INDICE = 15;
 
 class ArquivoIndice{
-    private:
-    
+	private:
+    	FILE * arqIndice;	
     public:
+    	ArquivoIndice(string nome);
+};
 
-}
+ArquivoIndice::ArquivoIndice(string nome){
+	this->arqIndice = fopen((nome + "-indice").c_str(), "wb");
+	fclose(this->arqIndice);
+};
+
+#endif
