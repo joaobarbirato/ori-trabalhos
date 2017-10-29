@@ -12,7 +12,6 @@ typedef struct{
 
 typedef struct{
     int topo;
-    int ultimoRRN;
 } RegistroCabecalho;
 
 const int TAM_REG = sizeof(Registro);
@@ -36,7 +35,6 @@ Arquivo::Arquivo(string nomeArquivo): nome(nomeArquivo){
     this->dados = fopen(nomeArquivo.c_str(), "wb");
     indice = new ArquivoIndice(nomeArquivo);
     this->rcabecalho.topo = -1;
-    this->rcabecalho.ultimoRRN = 0;
     fwrite(&this->rcabecalho, TAM_REG_CABECALHO, 1, this->dados);
     fclose(this->dados);
 };
@@ -50,10 +48,10 @@ int Arquivo::getTopo(){ return rcabecalho.topo; };
 void Arquivo::insere(const Registro * reg){
     char arroba;
     int rrn;
-    dados = fopen(nome.c_str(), "wb");
+    dados = fopen(nome.c_str(), "r+b");
     // verificar se há espaços vazios
     if(rcabecalho.topo == -1){ // se não há espaços vazios
-        fseek(dados, TAM_REG*rcabecalho.ultimoRRN + TAM_REG_CABECALHO, SEEK_SET); // append
+        fseek(dados, 0, SEEK_END);
         fwrite(reg, TAM_REG, 1, dados);
     }else{ // se há
         fseek(dados, TAM_REG * rcabecalho.topo + TAM_REG_CABECALHO + sizeof('@'), SEEK_SET); // vá ao topo da lista
