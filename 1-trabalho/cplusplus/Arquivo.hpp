@@ -67,8 +67,14 @@ void Arquivo::insere(const Registro & reg){
             fseek(dados, TAM_BLOCO * (rcabecalho.nBlocos+1) - 1, SEEK_SET);
             fwrite(&PIPE, sizeof(PIPE), 1, dados);
             fseek(dados, -(TAM_BLOCO), SEEK_CUR);
+            rcabecalho.nBlocos++;
         }else{
-            fseek(dados, TAM_REG_CABECALHO + TAM_REG*rcabecalho.nRegistros, SEEK_SET);
+            if(rcabecalho.nBlocos == 1)
+                fseek(dados, TAM_REG_CABECALHO + TAM_REG*rcabecalho.nRegistros, SEEK_SET);
+            else{
+                cout << "tadaima" << endl;
+                fseek(dados, TAM_BLOCO*(rcabecalho.nRegistros/REG_BLOCO) + ((rcabecalho.nRegistros) % (REG_BLOCO))*TAM_REG, SEEK_SET);
+            }
         }
             
         fwrite(&reg, TAM_REG, 1, dados);
