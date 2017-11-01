@@ -257,40 +257,4 @@ void Arquivo::atualizaRCabecalho(){
     fclose(dados);
 };
 
-int main(){
-    cout << "entrei no main" << endl;
-    Arquivo arqDados("arquivo_teste");
-    Registro a;
-    Registro b;
-    Registro c;
-    Registro d;
-    char p;
-
-    sprintf(a.nome, "Gabrieli Santos");
-    sprintf(a.cpf, "41458175839");
-    a.idade = 20;
-
-    sprintf(b.nome, "Micheli Santos");
-    sprintf(b.cpf, "01010101010");
-    b.idade = 17;
-
-    sprintf(c.nome, "Meire Santos");
-    sprintf(c.cpf, "02020202020");
-    c.idade = 42;
-
-    sprintf(d.nome, "Claudio Santos");
-    sprintf(d.cpf, "03030303030");
-    d.idade = 46;
-
-    //for(int i=0; i<7; i++){
-    //    arqDados.insere(a)
-    //}
-
-    arqDados.insere(a);
-    arqDados.insere(b);
-    arqDados.insere(c);
-    arqDados.insere(d);
-
-    arqDados.lista();
-}
 #endif
