@@ -187,7 +187,8 @@ bool Arquivo::busca(const char * chave, Registro & R){
         while(rcabecalho.nRegistros != rrn){
             fread(chaveAux, sizeof(char), 12, dados);
             if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
-                // TODO: cout << "mostrar na tela o dado encontrado" << endl
+                fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET);
+                fread(&R, TAM_REG, 1, dados);
                 return true;
             }
             else if(chaveAux[1] != '@'){ //registro nao foi removido
@@ -207,17 +208,6 @@ bool Arquivo::busca(const char * chave, Registro & R){
 
     //o arquivo possui mais de 1 bloco
 
-
-
-/*    // busque sequencialmente no indice
-    while(12 == fread(chaveAux, sizeof(char), 12, dados)){
-        if(!strcmp(chaveAux, chave)) // se forem iguais (achou a chave)
-            posicao = rrn; // guarde o RN da chave
-        else
-            rrn++;
-        fseek(dados, TAM_REG - 12*sizeof(char), SEEK_CUR);
-    }
-*/
     delete chaveAux;
     fclose(dados);
 
@@ -230,7 +220,7 @@ bool Arquivo::busca(const char * chave, Registro & R){
         fclose(dados);
     }
     return true;
-};
+}; //fim busca
 
 /*  
  *  MÉTODO remoção
@@ -267,4 +257,40 @@ void Arquivo::atualizaRCabecalho(){
     fclose(dados);
 };
 
+int main(){
+    cout << "entrei no main" << endl;
+    Arquivo arqDados("arquivo_teste");
+    Registro a;
+    Registro b;
+    Registro c;
+    Registro d;
+    char p;
+
+    sprintf(a.nome, "Gabrieli Santos");
+    sprintf(a.cpf, "41458175839");
+    a.idade = 20;
+
+    sprintf(b.nome, "Micheli Santos");
+    sprintf(b.cpf, "01010101010");
+    b.idade = 17;
+
+    sprintf(c.nome, "Meire Santos");
+    sprintf(c.cpf, "02020202020");
+    c.idade = 42;
+
+    sprintf(d.nome, "Claudio Santos");
+    sprintf(d.cpf, "03030303030");
+    d.idade = 46;
+
+    //for(int i=0; i<7; i++){
+    //    arqDados.insere(a)
+    //}
+
+    arqDados.insere(a);
+    arqDados.insere(b);
+    arqDados.insere(c);
+    arqDados.insere(d);
+
+    arqDados.lista();
+}
 #endif
