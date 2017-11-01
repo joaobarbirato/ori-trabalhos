@@ -3,7 +3,7 @@
  *  TRABALHO 1: Implementação de arquivo sem ordenação
  *  DISCIPLINA: Organização e Recuperação da Informação
  *  DOCENTE: Ricardo Rodrigues Ciferri
- *  DISCENTES:  Gabrieli Santos                 RA: 7265
+ *  DISCENTES:  Gabrieli Santos                 RA: 726523
  *              João Gabriel Melo Barbirato     RA: 726546
  */
 #ifndef ARQUIVO_HPP
@@ -54,6 +54,7 @@ class Arquivo{
         void insere(const Registro &);  // inserção
         void lista();                   // listagem
         bool busca(const char *, Registro &);   // busca
+        void remocao(const Registro &); // remoção
 }; // fim Arquivo
 
 /*  
@@ -169,16 +170,46 @@ void Arquivo::lista(){
     fclose(dados);
 }; // fim lista
 
-// TODO: Adaptar o método para a abordagem com blocos
 bool Arquivo::busca(const char * chave, Registro & R){
     //TODO: Tratar string com tamanho menor
     char * chaveAux = new char[12];
-    int rrn = 0, posicao = -1;
+    int rrn = 0, posicao = 0;
 
     dados = fopen(nome.c_str(), "rb");
     fseek(dados, TAM_REG_CABECALHO, SEEK_SET);
 
-    // busque sequencialmente no indice
+    //verificar se o arquivo é vazio
+    if(rcabecalho.nRegistros == 0)
+        return false;
+
+    //o arquivo possui 1 bloco
+    else if(rcabecalho.nBlocos == 1){
+        while(rcabecalho.nRegistros != rrn){
+            fread(chaveAux, sizeof(char), 12, dados);
+            if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
+                // TODO: cout << "mostrar na tela o dado encontrado" << endl
+                return true;
+            }
+            else if(chaveAux[1] != '@'){ //registro nao foi removido
+                fseek(dados, -sizeof(chaveAux), SEEK_CUR);
+                rrn++;
+                posicao++;
+                fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET);
+            }
+            else if(chaveAux[1] == '@'){ //registro foi removido
+                fseek(dados, -sizeof(chaveAux), SEEK_CUR);
+                posicao++;
+                fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET);
+            }
+        }
+        return false;
+    }
+
+    //o arquivo possui mais de 1 bloco
+
+
+
+/*    // busque sequencialmente no indice
     while(12 == fread(chaveAux, sizeof(char), 12, dados)){
         if(!strcmp(chaveAux, chave)) // se forem iguais (achou a chave)
             posicao = rrn; // guarde o RN da chave
@@ -186,7 +217,7 @@ bool Arquivo::busca(const char * chave, Registro & R){
             rrn++;
         fseek(dados, TAM_REG - 12*sizeof(char), SEEK_CUR);
     }
-
+*/
     delete chaveAux;
     fclose(dados);
 
@@ -200,6 +231,35 @@ bool Arquivo::busca(const char * chave, Registro & R){
     }
     return true;
 };
+
+/*  
+ *  MÉTODO remoção
+ *  OBJETIVO: Remover registros no arquivo de dados
+ *  ARGUMENTOS:
+ *      - nomeArquivo: nome do arquivo de dados
+ */
+void Arquivo::remocao(const Registro & reg){
+    int rrn; // variável auxiliar para guardar o rrn quando o algoritmo seguir o fluxo da lista invertida
+    bool encontrou;
+    dados = fopen(nome.c_str(), "r+b"); // abra o arquivo lógico
+
+    //verificar se o arquivo é vazio
+    if(rcabecalho.nRegistros == 0)
+        cout << "Arquivo vazio" << endl;
+
+    //o arquivo possui 1 bloco
+    else if(rcabecalho.nBlocos == 1){
+       
+    }
+
+    //o arquivo possui mais de 1 bloco
+
+    // removendo o registro
+    rcabecalho.nRegistros--; // diminua o número de registros
+    fclose(dados); // feche o arquivo lógico
+    atualizaRCabecalho(); // e atualize o cabeçalho.
+
+}; //fim remoção
 
 void Arquivo::atualizaRCabecalho(){
     dados = fopen(nome.c_str(), "r+b");
