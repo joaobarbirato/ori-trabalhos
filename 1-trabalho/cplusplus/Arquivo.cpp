@@ -170,10 +170,17 @@ void Arquivo::lista(){
     fclose(dados);
 }; // fim lista
 
+/*  
+ *  MÉTODO busca
+ *  OBJETIVO: Buscar registros no arquivo de dados a partir de uma chave
+ *  ARGUMENTOS:
+ *      - chave
+ *      - nomeArquivo: nome do arquivo de dados
+ */
 int Arquivo::busca(const char * chave, Registro & R){
-    char * chaveAux = new char[12];
+    char * chaveAux = new char[12]; //ponteiro que aponta para um vetor de char que guardará os 12 primeiros bytes de um registro
     int rrn = 0;
-    int posicao = 0;
+    int posicao = 0;        //variavel que percorre o bloco (seu valor é zero no início de cada bloco)
     int bloco_atual = 0;
     int nRegRemovidos = 0;
 
@@ -182,66 +189,58 @@ int Arquivo::busca(const char * chave, Registro & R){
     if(rcabecalho.nRegistros == 0){ //verificar se o arquivo é vazio
         delete chaveAux;
         fclose(dados);
-        return -1;
-    }else{ 
-        while(bloco_atual != rcabecalho.nBlocos){
-            if (bloco_atual == 0){
-                fseek(dados, TAM_REG_CABECALHO, SEEK_SET);
-                while(rcabecalho.nRegistros + nRegRemovidos != rrn && posicao/7 != 1){
-                    fread(chaveAux, sizeof(char), 12, dados);
+        return -1; //o registro nao existe no arquivo, portanto nao foi encontrado
+    }else{ //se o arquivo nao estiver vazio
+        while(bloco_atual != rcabecalho.nBlocos){ //cada repetição percorre um bloco diferente do arquivo
+            if (bloco_atual == 0){ //controle de qual bloco esta sendo percorrido
+                fseek(dados, TAM_REG_CABECALHO, SEEK_SET); //posiciona a posicao corrente no primeiro registro
+                while(rcabecalho.nRegistros + nRegRemovidos != rrn && posicao/7 != 1){ //estrutura usada para fazer a busca no primeiro bloco, que contém o registro de cabeçalho
+                    fread(chaveAux, sizeof(char), 12, dados); //guarda o cpf de cada registro na variavel chaveAux
                     if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
-                        fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET);
-                        fread(&R, TAM_REG, 1, dados);
+                        fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET); //posicao corrente vai para o inicio do registro encontrado
+                        fread(&R, TAM_REG, 1, dados); //passa por referencia o registro encontrado
                         delete chaveAux;
                         fclose(dados);
                         return rrn;
                     }
-                    else if(chaveAux[1] != '@'){ //registro nao foi removido
-                        fseek(dados, -sizeof(chaveAux), SEEK_CUR);
+                    else{ //se nao forem iguais (não achou a chave)
+                        fseek(dados, -sizeof(chaveAux), SEEK_CUR); //volta para o inicio do registro
                         rrn++;
                         posicao++;
-                        fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET);
-                    }
-                    else if(chaveAux[1] == '@'){ //registro foi removido
-                        fseek(dados, -sizeof(chaveAux), SEEK_CUR);
-                        rrn++;
-                        nRegRemovidos++;
-                        posicao++;
-                        fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET);
+                        fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET); //posição corrente vai para o proximo registro
+                        if(chaveAux[1] == '@'){ //se o registro foi removido
+                            nRegRemovidos++;
+                        }
                     }
                 }
-                if(posicao/7 == 1){
-                    bloco_atual++;
-                }else if(posicao < 7){
+                if(posicao/7 == 1){ //se o primeiro bloco ja tiver sido percorrido e chave ainda nao foi encontrada
+                    bloco_atual++; //proximo bloco
+                }else if(posicao < 7){ //se o primeiro bloco nao possui mais registros e a chave ainda nao foi encontrada
                     cout << "registro nao encontrado!" << endl; 
                     delete chaveAux;
                     fclose(dados);
-                    return -1;
+                    return -1; //o registro não existe no arquivo, portanto não foi encontrado
                 }
-            }else{
-                posicao = 0;
-                fseek(dados, TAM_BLOCO*bloco_atual, SEEK_SET);
-                while(rcabecalho.nRegistros + nRegRemovidos != rrn && posicao/7 != 1){
-                    fread(chaveAux, sizeof(char), 12, dados);
+            }else{ //se nao está no primeiro bloco
+                posicao = 0; //variavel que percorre o bloco é zerada, indicando inicio do novo bloco
+                fseek(dados, TAM_BLOCO*bloco_atual, SEEK_SET); //posicao corrente vai para o inicio do bloco
+                while(rcabecalho.nRegistros + nRegRemovidos != rrn && posicao/7 != 1){ //estrutura usada para fazer a busca nos demais blocos, que não contém o registro de cabeçalho
+                    fread(chaveAux, sizeof(char), 12, dados); //guarda o cpf de cada registro na variavel chaveAux
                     if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
-                        fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET);
-                        fread(&R, TAM_REG, 1, dados);
+                        fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET); //posicao corrente vai para o inicio do registro encontrado
+                        fread(&R, TAM_REG, 1, dados); //passa por referencia o registro encontrado
                         delete chaveAux;
                         fclose(dados);
-                        //cout << "oi-4" << endl;
                         return rrn;
-                    }else if(chaveAux[1] != '@'){ //registro nao foi removido
-                        fseek(dados, -sizeof(chaveAux), SEEK_CUR);
-                        rrn++;
-                        posicao++;
-                        fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET);
-                    }else if(chaveAux[1] == '@'){ //registro foi removido
-                        fseek(dados, -sizeof(chaveAux), SEEK_CUR);
-                        rrn++;
-                        nRegRemovidos++;
-                        posicao++;
-                        fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET);
                     }
+                    else{ //se nao forem iguais (não achou a chave)
+                        fseek(dados, -sizeof(chaveAux), SEEK_CUR); //volta para o inicio do registro
+                        rrn++;
+                        posicao++;
+                        fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET); //posição corrente vai para o proximo registro
+                        if(chaveAux[1] == '@'){
+                            nRegRemovidos++;
+                        }
                 }
                 if(posicao/7 == 1){
                     bloco_atual++;
@@ -271,34 +270,33 @@ void Arquivo::remove(const Registro & reg){
     int rrn;
     int posicao = 0;
     int bloco_atual;
-
-    
+  
     if(busca(reg.cpf,rAux) != -1){
         cout << "deu certo" << endl;
         cout << "RRN: " << busca(reg.cpf,rAux) << endl;
         rrn = busca(reg.cpf,rAux);
         cout << rrn;
     }
-    dados = fopen(nome.c_str(), "r+b");
-    if(rrn >= 0 && rrn < 7){ //se só existir um bloco
+    dados = fopen(nome.c_str(), "r+b"); //abre o arquivo lógico
+    if(rrn >= 0 && rrn < 7){ //se o registro estiver no primeiro bloco
         fseek(dados, TAM_REG_CABECALHO + rrn*TAM_REG, SEEK_SET); //posiciona na posicao do resgistro a ser removido
-        fwrite(&arroba, sizeof(arroba), 1, dados);
-        fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados);
-        rcabecalho.topo = rrn;
+        fwrite(&arroba, sizeof(arroba), 1, dados); //escreve o caractere '@' no primeiro byte do registro
+        fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados); //escreve o topo da lista invertida nos quatro bytes seguintes criando uma lista invertida encadeada
+        rcabecalho.topo = rrn; //atualiza o topo
     }
-    else if(rrn >= 7){ //mais de um bloco
+    else if(rrn >= 7){ //se o registro estiver a partir do segundo bloco
         
-        for(int i=0; i<=rrn; i++){
+        for(int i=0; i<=rrn; i++){ //laço utilizado para saber quantos blocos tem no registro
             posicao++;
             if(posicao == 7){
                 bloco_atual++;
-                posicao = 0;
+                posicao = 0; //variavel é sempre zerada no inicio de cada bloco
             }
         }
-        fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET);
-        fwrite(&arroba, sizeof(arroba), 1, dados);
-        fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados);
-        rcabecalho.topo = rrn;
+        fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET); //posiciona no inicio de cada bloco
+        fwrite(&arroba, sizeof(arroba), 1, dados); //escreve o caractere '@' no primeiro byte do registro
+        fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados); //escreve o topo da lista invertida nos quatro bytes seguintes criando uma lista invertida encadeada
+        rcabecalho.topo = rrn; //atualiza o topo
     }
     // removendo o registro
     rcabecalho.nRegistros--; // diminua o número de registros
