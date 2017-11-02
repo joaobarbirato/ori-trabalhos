@@ -53,8 +53,8 @@ class Arquivo{
         ~Arquivo();                     // destrutor
         void insere(const Registro &);  // inserção
         void lista();                   // listagem
-        bool busca(const char *, Registro &);   // busca
-        void remocao(const Registro &); // remoção
+        int busca(const char *, Registro &);   // busca
+        void remove(const Registro &); // remoção
 }; // fim Arquivo
 
 /*  
@@ -170,31 +170,32 @@ void Arquivo::lista(){
     fclose(dados);
 }; // fim lista
 
-bool Arquivo::busca(const char * chave, Registro & R){
+int Arquivo::busca(const char * chave, Registro & R){
     char * chaveAux = new char[12];
     int rrn = 0;
     int posicao = 0;
     int bloco_atual = 0;
+    int nRegRemovidos = 0;
 
     dados = fopen(nome.c_str(), "rb");
 
     if(rcabecalho.nRegistros == 0){ //verificar se o arquivo é vazio
         delete chaveAux;
         fclose(dados);
-        return false;
+        return -1;
     }
     else{ 
         while(bloco_atual != rcabecalho.nBlocos){
             if (bloco_atual == 0){
                 fseek(dados, TAM_REG_CABECALHO, SEEK_SET);
-                while(rcabecalho.nRegistros != rrn && posicao/7 != 1){
+                while(rcabecalho.nRegistros + nRegRemovidos != rrn && posicao/7 != 1){
                     fread(chaveAux, sizeof(char), 12, dados);
                     if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
                         fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET);
                         fread(&R, TAM_REG, 1, dados);
                         delete chaveAux;
                         fclose(dados);
-                        return true;
+                        return rrn;
                     }
                     else if(chaveAux[1] != '@'){ //registro nao foi removido
                         fseek(dados, -sizeof(chaveAux), SEEK_CUR);
@@ -204,6 +205,8 @@ bool Arquivo::busca(const char * chave, Registro & R){
                     }
                     else if(chaveAux[1] == '@'){ //registro foi removido
                         fseek(dados, -sizeof(chaveAux), SEEK_CUR);
+                        rrn++;
+                        nRegRemovidos++;
                         posicao++;
                         fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET);
                     }
@@ -212,22 +215,23 @@ bool Arquivo::busca(const char * chave, Registro & R){
                     bloco_atual++;
                 }
                 else if(posicao < 7){
+                    cout << "registro nao encontrado!" << endl; 
                     delete chaveAux;
                     fclose(dados);
-                    return true;
+                    return -1;
                 }
             }
             else{
                 posicao = 0;
                 fseek(dados, TAM_BLOCO*bloco_atual, SEEK_SET);
-                while(rcabecalho.nRegistros != rrn && posicao/7 != 1){
+                while(rcabecalho.nRegistros + nRegRemovidos != rrn && posicao/7 != 1){
                     fread(chaveAux, sizeof(char), 12, dados);
                     if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
                         fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET);
                         fread(&R, TAM_REG, 1, dados);
                         delete chaveAux;
                         fclose(dados);
-                        return true;
+                        return rrn;
                     }
                     else if(chaveAux[1] != '@'){ //registro nao foi removido
                         fseek(dados, -sizeof(chaveAux), SEEK_CUR);
@@ -237,6 +241,8 @@ bool Arquivo::busca(const char * chave, Registro & R){
                     }
                     else if(chaveAux[1] == '@'){ //registro foi removido
                         fseek(dados, -sizeof(chaveAux), SEEK_CUR);
+                        rrn++;
+                        nRegRemovidos++;
                         posicao++;
                         fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET);
                     }
@@ -245,15 +251,16 @@ bool Arquivo::busca(const char * chave, Registro & R){
                     bloco_atual++;
                 }
                 else if(posicao < 7){
+                    cout << "registro nao encontrado!" << endl;
                     delete chaveAux;
                     fclose(dados);
-                    return true;
+                    return -1;
                 }
             }
         }
         delete chaveAux;
         fclose(dados);
-        return false;
+        return -1;
     }
 };
 
@@ -263,27 +270,46 @@ bool Arquivo::busca(const char * chave, Registro & R){
  *  ARGUMENTOS:
  *      - nomeArquivo: nome do arquivo de dados
  */
-void Arquivo::remocao(const Registro & reg){
-    int rrn; // variável auxiliar para guardar o rrn quando o algoritmo seguir o fluxo da lista invertida
-    bool encontrou;
-    dados = fopen(nome.c_str(), "r+b"); // abra o arquivo lógico
+void Arquivo::remove(const Registro & reg){
+    char arroba = '@';
+    Registro rAux;
+    int rrn;
+    int posicao = 0;
+    int bloco_atual;
 
-    //verificar se o arquivo é vazio
-    if(rcabecalho.nRegistros == 0)
-        cout << "Arquivo vazio" << endl;
+    dados = fopen(nome.c_str(), "rb");
 
-    //o arquivo possui 1 bloco
-    else if(rcabecalho.nBlocos == 1){
-       
+    if(busca(reg.cpf,rAux) != -1){
+        cout << "deu certo" << endl;
+        cout << "RRN: " << busca(reg.cpf,rAux) << endl;
+        rrn = busca(reg.cpf,rAux);
+        cout << rrn;
     }
 
-    //o arquivo possui mais de 1 bloco
+    if(rrn >= 0 && rrn < 7){ //se só existir um bloco
+        fseek(dados, TAM_REG_CABECALHO + rrn*TAM_REG, SEEK_SET); //posiciona na posicao do resgistro a ser removido
+        fwrite(&arroba, sizeof(arroba), 1, dados);
+        fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados);
+        rcabecalho.topo = rrn;
+    }
+    else if(rrn >= 7){ //mais de um bloco
+        for(int i=0; i<=rrn; i++){
+            posicao++;
+            if(posicao == 7){
+                bloco_atual++;
+                posicao = 0;
+            }
+        }
+        fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET);
+        fwrite(&arroba, sizeof(arroba), 1, dados);
+        fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados);
+        rcabecalho.topo = rrn;
 
+    }
     // removendo o registro
     rcabecalho.nRegistros--; // diminua o número de registros
     fclose(dados); // feche o arquivo lógico
     atualizaRCabecalho(); // e atualize o cabeçalho.
-
 }; //fim remoção
 
 void Arquivo::atualizaRCabecalho(){
@@ -312,18 +338,45 @@ Arquivo arqDados("oimundo");
     sprintf(d.cpf, "43810760870");
     d.idade = 17;
 
-    for(int i=0; i < 7; i++){
+    for(int i=0; i < 1; i++){
         arqDados.insere(a);
     }
     arqDados.insere(b);
     arqDados.insere(b);
     arqDados.insere(d);
+    arqDados.remove(d);
     arqDados.lista();
-    arqDados.busca(b.cpf,c);
+    
+    /*if(arqDados.busca(d.cpf,c) != -1){
+        cout << c.cpf << endl;
+        cout << c.nome << endl;
+        cout << c.idade << endl;
+        cout << "RRN: " << arqDados.busca(d.cpf,c) << endl;
+        cout << endl;
+    }
 
-    cout << c.cpf << endl;
-    cout << c.nome << endl;
-    cout << c.idade << endl;
+    if(arqDados.busca(a.cpf,c) != -1){
+        cout << c.cpf << endl;
+        cout << c.nome << endl;
+        cout << c.idade << endl;
+        cout << "RRN: " << arqDados.busca(a.cpf,c) << endl;
+        cout << endl;
+    }
+    
+    if(arqDados.busca(b.cpf,c) != -1){
+        cout << c.cpf << endl;
+        cout << c.nome << endl;
+        cout << c.idade << endl;
+        cout << "RRN: " << arqDados.busca(b.cpf,c) << endl;
+        cout << endl;
+    }
+
+    if(arqDados.busca("01010101010",c) != -1){
+        cout << c.cpf << endl;
+        cout << c.nome << endl;
+        cout << c.idade << endl;
+    }*/
+   
     return 0;
 }
 
