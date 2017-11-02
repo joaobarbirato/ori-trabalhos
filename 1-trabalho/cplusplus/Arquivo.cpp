@@ -183,8 +183,7 @@ int Arquivo::busca(const char * chave, Registro & R){
         delete chaveAux;
         fclose(dados);
         return -1;
-    }
-    else{ 
+    }else{ 
         while(bloco_atual != rcabecalho.nBlocos){
             if (bloco_atual == 0){
                 fseek(dados, TAM_REG_CABECALHO, SEEK_SET);
@@ -213,15 +212,13 @@ int Arquivo::busca(const char * chave, Registro & R){
                 }
                 if(posicao/7 == 1){
                     bloco_atual++;
-                }
-                else if(posicao < 7){
+                }else if(posicao < 7){
                     cout << "registro nao encontrado!" << endl; 
                     delete chaveAux;
                     fclose(dados);
                     return -1;
                 }
-            }
-            else{
+            }else{
                 posicao = 0;
                 fseek(dados, TAM_BLOCO*bloco_atual, SEEK_SET);
                 while(rcabecalho.nRegistros + nRegRemovidos != rrn && posicao/7 != 1){
@@ -231,15 +228,14 @@ int Arquivo::busca(const char * chave, Registro & R){
                         fread(&R, TAM_REG, 1, dados);
                         delete chaveAux;
                         fclose(dados);
+                        //cout << "oi-4" << endl;
                         return rrn;
-                    }
-                    else if(chaveAux[1] != '@'){ //registro nao foi removido
+                    }else if(chaveAux[1] != '@'){ //registro nao foi removido
                         fseek(dados, -sizeof(chaveAux), SEEK_CUR);
                         rrn++;
                         posicao++;
                         fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET);
-                    }
-                    else if(chaveAux[1] == '@'){ //registro foi removido
+                    }else if(chaveAux[1] == '@'){ //registro foi removido
                         fseek(dados, -sizeof(chaveAux), SEEK_CUR);
                         rrn++;
                         nRegRemovidos++;
@@ -249,8 +245,7 @@ int Arquivo::busca(const char * chave, Registro & R){
                 }
                 if(posicao/7 == 1){
                     bloco_atual++;
-                }
-                else if(posicao < 7){
+                }else if(posicao < 7){
                     cout << "registro nao encontrado!" << endl;
                     delete chaveAux;
                     fclose(dados);
@@ -277,15 +272,14 @@ void Arquivo::remove(const Registro & reg){
     int posicao = 0;
     int bloco_atual;
 
-    dados = fopen(nome.c_str(), "rb");
-
+    
     if(busca(reg.cpf,rAux) != -1){
         cout << "deu certo" << endl;
         cout << "RRN: " << busca(reg.cpf,rAux) << endl;
         rrn = busca(reg.cpf,rAux);
         cout << rrn;
     }
-
+    dados = fopen(nome.c_str(), "r+b");
     if(rrn >= 0 && rrn < 7){ //se só existir um bloco
         fseek(dados, TAM_REG_CABECALHO + rrn*TAM_REG, SEEK_SET); //posiciona na posicao do resgistro a ser removido
         fwrite(&arroba, sizeof(arroba), 1, dados);
@@ -293,6 +287,7 @@ void Arquivo::remove(const Registro & reg){
         rcabecalho.topo = rrn;
     }
     else if(rrn >= 7){ //mais de um bloco
+        
         for(int i=0; i<=rrn; i++){
             posicao++;
             if(posicao == 7){
@@ -304,7 +299,6 @@ void Arquivo::remove(const Registro & reg){
         fwrite(&arroba, sizeof(arroba), 1, dados);
         fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados);
         rcabecalho.topo = rrn;
-
     }
     // removendo o registro
     rcabecalho.nRegistros--; // diminua o número de registros
@@ -324,7 +318,7 @@ Arquivo arqDados("oimundo");
     Registro b;
     Registro a;
     Registro d;
-    Registro c;
+    Registro c, aux;
     char p;
     sprintf(a.nome, "Gabrieli Santos");
     sprintf(a.cpf, "41458175839");
@@ -338,13 +332,13 @@ Arquivo arqDados("oimundo");
     sprintf(d.cpf, "43810760870");
     d.idade = 17;
 
-    for(int i=0; i < 1; i++){
+    for(int i=0; i < 7; i++){
         arqDados.insere(a);
     }
     arqDados.insere(b);
     arqDados.insere(b);
     arqDados.insere(d);
-    arqDados.remove(d);
+   // arqDados.remove(d);
     arqDados.lista();
     
     /*if(arqDados.busca(d.cpf,c) != -1){
