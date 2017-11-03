@@ -190,7 +190,8 @@ int Arquivo::busca(const char * chave, Registro & R){
         delete chaveAux;
         fclose(dados);
         return -1; //o registro nao existe no arquivo, portanto nao foi encontrado
-    }else{ //se o arquivo nao estiver vazio
+    }
+    else{ //se o arquivo nao estiver vazio
         while(bloco_atual != rcabecalho.nBlocos){ //cada repetição percorre um bloco diferente do arquivo
             if (bloco_atual == 0){ //controle de qual bloco esta sendo percorrido
                 fseek(dados, TAM_REG_CABECALHO, SEEK_SET); //posiciona a posicao corrente no primeiro registro
@@ -221,7 +222,8 @@ int Arquivo::busca(const char * chave, Registro & R){
                     fclose(dados);
                     return -1; //o registro não existe no arquivo, portanto não foi encontrado
                 }
-            }else{ //se nao está no primeiro bloco
+            }
+            else{ //se nao está no primeiro bloco
                 posicao = 0; //variavel que percorre o bloco é zerada, indicando inicio do novo bloco
                 fseek(dados, TAM_BLOCO*bloco_atual, SEEK_SET); //posicao corrente vai para o inicio do bloco
                 while(rcabecalho.nRegistros + nRegRemovidos != rrn && posicao/7 != 1){ //estrutura usada para fazer a busca nos demais blocos, que não contém o registro de cabeçalho
@@ -241,6 +243,7 @@ int Arquivo::busca(const char * chave, Registro & R){
                         if(chaveAux[1] == '@'){
                             nRegRemovidos++;
                         }
+                    }
                 }
                 if(posicao/7 == 1){
                     bloco_atual++;
