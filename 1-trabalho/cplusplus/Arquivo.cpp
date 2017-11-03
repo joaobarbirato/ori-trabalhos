@@ -346,8 +346,67 @@ void Arquivo::atualizaRCabecalho(){
 };
 
 int main(){
+    int opcao;
+    char repete;
+    Arquivo arquivo("Arquivo de Dados");
+    Registro registro;
 
-    Arquivo arqDados("oimundo");
+    do{
+        cout << "***MENU DE OPCOES***" << endl << endl;
+        cout << "1. Inserir registro" << endl;
+        cout << "2. Buscar registro" << endl;
+        cout << "3. Remover registro" << endl;
+        cout << "4. Listar registros" << endl;
+        cout << "5. Compactar arquivo" << endl << endl;
+        cout << "Escolha uma opcao: ";
+        cin >> opcao;
+
+        switch (opcao){
+            case 1:
+                //TO DO: resolver o problema do buffer
+                cout << "Nome: ";
+                cin >> registro.nome;
+                cout << endl;
+                cout << "CPF: ";
+                cin >> registro.cpf;
+                cout << endl;
+                cout << "Idade: ";
+                cin >> registro.idade;
+                cout << endl;
+                arquivo.insere(registro);
+                cout << "O registro foi inserido no Arquivo de Dados!" << endl << endl;
+                break;
+            case 2:
+                cout << "Informe o CPF: ";
+                cin >> registro.cpf;
+                cout << endl;
+                arquivo.busca(registro.cpf, registro);
+                break;
+            case 3:
+                //pra remover precisa informar a chave
+                //TO DO: mudar o metodo remove()
+                cout << "O registro foi removido do Arquivo de Dados" << endl;
+                break;
+            case 4:
+                arquivo.lista();
+                break;
+            case 5:
+                arquivo.compacta();
+                cout << "O arquivo foi compactado!" << endl;
+                break;
+            default:
+                cout << "Opcao invalida !!" << endl;
+        }
+
+        cout << "Voltar ao MENU DE OPCOES? [S/N]: ";
+        cin >> repete;
+        cout << endl;
+    } while (repete == 's' || repete == 'S');
+
+
+
+
+   /* Arquivo arqDados("oimundo");
     Registro b;
     Registro a;
     Registro d;
