@@ -174,9 +174,6 @@ void Arquivo::lista(){
     fclose(dados);
 }; // fim lista
 
-<<<<<<< HEAD
-//TODO: revisar busca
-=======
 /*  
  *  MÉTODO busca
  *  OBJETIVO: Buscar registros no arquivo de dados a partir de uma chave
@@ -184,7 +181,6 @@ void Arquivo::lista(){
  *      - chave
  *      - nomeArquivo: nome do arquivo de dados
  */
->>>>>>> d9f50969273b4678167db7eea4c496e40d4dd6f6
 int Arquivo::busca(const char * chave, Registro & R){
     char * chaveAux = new char[12]; //ponteiro que aponta para um vetor de char que guardará os 12 primeiros bytes de um registro
     int rrn = 0;
@@ -281,7 +277,6 @@ void Arquivo::remove(const Registro & reg){
     int rrn;
     int posicao = 0;
     int bloco_atual;
-<<<<<<< HEAD
 
     rrn = busca(reg.cpf, rAux);
     if(rrn == -1)
@@ -289,17 +284,6 @@ void Arquivo::remove(const Registro & reg){
 
     dados = fopen(nome.c_str(), "r+b");
     if(rrn >= 0 && rrn < 7){ //se só existir um bloco
-=======
-  
-    if(busca(reg.cpf,rAux) != -1){
-        cout << "deu certo" << endl;
-        cout << "RRN: " << busca(reg.cpf,rAux) << endl;
-        rrn = busca(reg.cpf,rAux);
-        cout << rrn;
-    }
-    dados = fopen(nome.c_str(), "r+b"); //abre o arquivo lógico
-    if(rrn >= 0 && rrn < 7){ //se o registro estiver no primeiro bloco
->>>>>>> d9f50969273b4678167db7eea4c496e40d4dd6f6
         fseek(dados, TAM_REG_CABECALHO + rrn*TAM_REG, SEEK_SET); //posiciona na posicao do resgistro a ser removido
         fwrite(&arroba, sizeof(arroba), 1, dados); //escreve o caractere '@' no primeiro byte do registro
         fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados); //escreve o topo da lista invertida nos quatro bytes seguintes criando uma lista invertida encadeada
