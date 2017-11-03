@@ -23,6 +23,7 @@ typedef struct{
 typedef struct{
     int topo;
     int nRegistros;
+    int nRetirados;
     int nBlocos;
 } RegistroCabecalho;
 
@@ -47,6 +48,7 @@ class Arquivo{
 
         // métodos privados
         void atualizaRCabecalho(); // atualizar cabeçalho conforme mudado.
+
     public:     // Componentes públicos
         // métodos púlicos
         Arquivo(string nomeArquivo);    // construtor
@@ -55,6 +57,7 @@ class Arquivo{
         void lista();                   // listagem
         int busca(const char *, Registro &);   // busca
         void remove(const Registro &); // remoção
+        void compacta(); // compactação
 }; // fim Arquivo
 
 /*  
@@ -68,6 +71,7 @@ Arquivo::Arquivo(string nomeArquivo): nome(nomeArquivo){
     this->rcabecalho.topo = -1; // aponte o topo da lista invertida para nenhum registro
     this->rcabecalho.nRegistros = 0; // inicie o número de registros como 0
     this->rcabecalho.nBlocos = 1;   //  inicie o numero de blocos como 1
+    this->rcabecalho.nRetirados = 0;
     fwrite(&this->rcabecalho, TAM_REG_CABECALHO, 1, this->dados); // escreva o registro de cabeçalho no arquivo de dados
 
     // determinando bloco
@@ -170,6 +174,7 @@ void Arquivo::lista(){
     fclose(dados);
 }; // fim lista
 
+//TODO: revisar busca
 int Arquivo::busca(const char * chave, Registro & R){
     char * chaveAux = new char[12];
     int rrn = 0;
@@ -272,13 +277,10 @@ void Arquivo::remove(const Registro & reg){
     int posicao = 0;
     int bloco_atual;
 
-    
-    if(busca(reg.cpf,rAux) != -1){
-        cout << "deu certo" << endl;
-        cout << "RRN: " << busca(reg.cpf,rAux) << endl;
-        rrn = busca(reg.cpf,rAux);
-        cout << rrn;
-    }
+    rrn = busca(reg.cpf, rAux);
+    if(rrn == -1)
+        return;
+
     dados = fopen(nome.c_str(), "r+b");
     if(rrn >= 0 && rrn < 7){ //se só existir um bloco
         fseek(dados, TAM_REG_CABECALHO + rrn*TAM_REG, SEEK_SET); //posiciona na posicao do resgistro a ser removido
@@ -302,9 +304,40 @@ void Arquivo::remove(const Registro & reg){
     }
     // removendo o registro
     rcabecalho.nRegistros--; // diminua o número de registros
+    rcabecalho.nRetirados++;
     fclose(dados); // feche o arquivo lógico
     atualizaRCabecalho(); // e atualize o cabeçalho.
 }; //fim remoção
+
+void Arquivo::compacta(){
+    int topoAux; // elemento da lista
+    int * vPilha;
+    char * ehArroba;
+
+    if(rcabecalho.topo == -1) // se o a lista está vazia
+        return; // acabe o método
+    else{ // se não
+        vPilha = new int[rcabecalho.nRetirados];
+        dados = fopen(nome.c_str(), "r+b");
+        // transforme a pilha em um vetor
+        topoAux = rcabecalho.topo;
+        for(int i=0; i < rcabecalho.nRetirados; i++){
+            if(topoAux/REG_BLOCO == 0) // se está no primeiro bloco
+                fseek(dados, TAM_REG_CABECALHO + TAM_REG*topoAux, SEEK_SET);
+            else // se está nos demais blocos
+                fseek(dados, (topoAux/REG_BLOCO)*TAM_BLOCO + (topoAux % REG_BLOCO)*TAM_REG, SEEK_SET);
+            fread(ehArroba, sizeof(char), 1, dados);
+
+            if(*ehArroba != '@'){ // se removeu certo, nao vai chegar aqui. mas caso chegue:
+                fclose(dados);
+                return;
+            }
+
+            vPilha[i] = topoAux;
+            fread(&topoAux, sizeof(int), 1, dados); // atualize o proximo topo
+        }
+    }
+};
 
 void Arquivo::atualizaRCabecalho(){
     dados = fopen(nome.c_str(), "r+b");
@@ -314,7 +347,7 @@ void Arquivo::atualizaRCabecalho(){
 
 int main(){
 
-Arquivo arqDados("oimundo");
+    Arquivo arqDados("oimundo");
     Registro b;
     Registro a;
     Registro d;
@@ -338,9 +371,9 @@ Arquivo arqDados("oimundo");
     arqDados.insere(b);
     arqDados.insere(b);
     arqDados.insere(d);
-   // arqDados.remove(d);
+    arqDados.remove(a);
     arqDados.lista();
-    
+
     /*if(arqDados.busca(d.cpf,c) != -1){
         cout << c.cpf << endl;
         cout << c.nome << endl;
