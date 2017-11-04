@@ -56,7 +56,7 @@ class Arquivo{
         void insere(const Registro &);  // inserção
         void lista();                   // listagem
         int busca(const char *, Registro &);   // busca
-        void remove(const char * chave, const Registro &); // remoção
+        void remove(const char * chave, Registro &); // remoção
         void compacta(); // compactação
 }; // fim Arquivo
 
@@ -149,7 +149,7 @@ void Arquivo::lista(){
     dados = fopen(nome.c_str(), "rb"); // abra o arquivo de dados
     fseek(dados, TAM_REG_CABECALHO, SEEK_SET); // posicione o ponteiro para após o registro de cabeçalho
     // exibição sequencial dos dados
-    while(1 == fread(&rAux, TAM_REG, 1, dados) && contRRN < rcabecalho.nRegistros){ // se não chegou no fim do arquivo
+    while(1 == fread(&rAux, TAM_REG, 1, dados) && contRRN < rcabecalho.nRegistros + rcabecalho.nRemovidos){ // se não chegou no fim do arquivo
         contRRN++;
         // verificar se o registro lido está removido
         fseek(dados, -TAM_REG, SEEK_CUR); //
@@ -203,10 +203,10 @@ int Arquivo::busca(const char * chave, Registro & R){
                     if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
                         fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET); //posicao corrente vai para o inicio do registro encontrado
                         fread(&R, TAM_REG, 1, dados); //passa por referencia o registro encontrado
-                        cout << "Registro encontrado!" << endl;
-                        cout << "Nome: "<< R.nome << endl;
-                        cout << "CPF: " << R.cpf << endl;
-                        cout << "Idade: "<< R.idade << endl << endl;
+                       // cout << "Registro encontrado!" << endl;
+                       // cout << "Nome: "<< R.nome << endl;
+                       // cout << "CPF: " << R.cpf << endl;
+                       // cout << "Idade: "<< R.idade << endl << endl;
                         delete chaveAux;
                         fclose(dados);
                         return rrn;
@@ -278,7 +278,7 @@ int Arquivo::busca(const char * chave, Registro & R){
  *  ARGUMENTOS:
  *      - nomeArquivo: nome do arquivo de dados
  */
-void Arquivo::remove(const char * chave, const Registro & reg){
+void Arquivo::remove(const char * chave, Registro & reg){
     char arroba = '@';
     Registro rAux;
     int rrn;
@@ -354,12 +354,13 @@ void Arquivo::atualizaRCabecalho(){
 };
 
 int main(){
+/*
+*/
     int opcao;
     char repete;
     Arquivo arquivo("Arquivo de Dados");
     Registro registro;
     string palavra;
-/*
     char linha[16];
     cout << "Nome: ";
     fgets(registro.nome, 51, stdin);
@@ -367,7 +368,6 @@ int main(){
     cin >> registro.cpf;
     cout << registro.nome << endl;
     cout << registro.cpf;
-*/
     Registro b;
     Registro a;
     Registro d;
@@ -439,7 +439,6 @@ int main(){
     } while (repete == 's' || repete == 'S');
 
 
-
    /* Arquivo arqDados("oimundo");
     Registro b;
     Registro a;
@@ -496,7 +495,8 @@ int main(){
         cout << c.cpf << endl;
         cout << c.nome << endl;
         cout << c.idade << endl;
-    }*/
+    }
+*/
    
     return 0;
 }
