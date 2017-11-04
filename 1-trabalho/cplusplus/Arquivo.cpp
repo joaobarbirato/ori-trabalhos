@@ -56,7 +56,7 @@ class Arquivo{
         void insere(const Registro &);  // inserção
         void lista();                   // listagem
         int busca(const char *, Registro &);   // busca
-        void remove(const Registro &); // remoção
+        void remove(const char * chave, const Registro &); // remoção
         void compacta(); // compactação
 }; // fim Arquivo
 
@@ -203,6 +203,10 @@ int Arquivo::busca(const char * chave, Registro & R){
                     if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
                         fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET); //posicao corrente vai para o inicio do registro encontrado
                         fread(&R, TAM_REG, 1, dados); //passa por referencia o registro encontrado
+                        cout << "Registro encontrado!" << endl;
+                        cout << "Nome: "<< R.nome << endl;
+                        cout << "CPF: " << R.cpf << endl;
+                        cout << "Idade: "<< R.idade << endl << endl;
                         delete chaveAux;
                         fclose(dados);
                         return rrn;
@@ -220,7 +224,7 @@ int Arquivo::busca(const char * chave, Registro & R){
                 if(posicao/REG_BLOCO == 1){ //se o primeiro bloco ja tiver sido percorrido e chave ainda nao foi encontrada
                     bloco_atual++; //proximo bloco
                 }else if(posicao < REG_BLOCO){ //se o primeiro bloco nao possui mais registros e a chave ainda nao foi encontrada
-                    cout << "registro nao encontrado!" << endl; 
+                    cout << "Registro nao encontrado!" << endl; 
                     delete chaveAux;
                     fclose(dados);
                     return -1; //o registro não existe no arquivo, portanto não foi encontrado
@@ -234,6 +238,10 @@ int Arquivo::busca(const char * chave, Registro & R){
                     if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
                         fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET); //posicao corrente vai para o inicio do registro encontrado
                         fread(&R, TAM_REG, 1, dados); //passa por referencia o registro encontrado
+                        cout << "Registro encontrado!" << endl;
+                        cout << "Nome: "<< R.nome << endl;
+                        cout << "CPF: " << R.cpf << endl;
+                        cout << "Idade: "<< R.idade << endl << endl;
                         delete chaveAux;
                         fclose(dados);
                         return rrn;
@@ -270,14 +278,14 @@ int Arquivo::busca(const char * chave, Registro & R){
  *  ARGUMENTOS:
  *      - nomeArquivo: nome do arquivo de dados
  */
-void Arquivo::remove(const Registro & reg){
+void Arquivo::remove(const char * chave, const Registro & reg){
     char arroba = '@';
     Registro rAux;
     int rrn;
     int posicao = 0;
     int bloco_atual;
 
-    rrn = busca(reg.cpf, rAux);
+    rrn = busca(chave, rAux);
     if(rrn == -1)
         return;
 
@@ -350,7 +358,36 @@ int main(){
     char repete;
     Arquivo arquivo("Arquivo de Dados");
     Registro registro;
+    string palavra;
+/*
+    char linha[16];
+    cout << "Nome: ";
+    fgets(registro.nome, 51, stdin);
+    cout << "cpf: ";
+    cin >> registro.cpf;
+    cout << registro.nome << endl;
+    cout << registro.cpf;
+*/
+    Registro b;
+    Registro a;
+    Registro d;
+    Registro c, aux;
+    char p;
+    sprintf(a.nome, "Gabrieli Santos");
+    sprintf(a.cpf, "41458175839");
+    a.idade = 20;
 
+    sprintf(b.nome, "Gianna Barbirato");
+    sprintf(b.cpf, "41193784468");
+    b.idade = 55;
+
+    sprintf(d.nome, "Micheli Santos");
+    sprintf(d.cpf, "43810760870");
+    d.idade = 17;
+    arquivo.insere(a);
+    arquivo.insere(b);
+    arquivo.insere(d);
+    int teste;
     do{
         cout << "***MENU DE OPCOES***" << endl << endl;
         cout << "1. Inserir registro" << endl;
@@ -360,20 +397,16 @@ int main(){
         cout << "5. Compactar arquivo" << endl << endl;
         cout << "Escolha uma opcao: ";
         cin >> opcao;
+        cin.clear();
+        cout << endl;
 
         switch (opcao){
             case 1:
-                //TO DO: resolver o problema do buffer
+                cout << "digite qualquer coisa: ";
+                cin >> teste;
                 cout << "Nome: ";
-                cin >> registro.nome;
-                cout << endl;
-                cout << "CPF: ";
-                cin >> registro.cpf;
-                cout << endl;
-                cout << "Idade: ";
-                cin >> registro.idade;
-                cout << endl;
-                arquivo.insere(registro);
+                fgets(registro.nome, 51, stdin);
+                cout << registro.nome << endl;
                 cout << "O registro foi inserido no Arquivo de Dados!" << endl << endl;
                 break;
             case 2:
@@ -383,8 +416,10 @@ int main(){
                 arquivo.busca(registro.cpf, registro);
                 break;
             case 3:
-                //pra remover precisa informar a chave
-                //TO DO: mudar o metodo remove()
+                cout << "Informe o CPF: ";
+                cin >> registro.cpf;
+                cout << endl;
+                arquivo.remove(registro.cpf, registro);
                 cout << "O registro foi removido do Arquivo de Dados" << endl;
                 break;
             case 4:
@@ -402,7 +437,6 @@ int main(){
         cin >> repete;
         cout << endl;
     } while (repete == 's' || repete == 'S');
-
 
 
 
