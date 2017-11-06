@@ -9,6 +9,7 @@
 #ifndef ARQUIVO_HPP
 #include <iostream>
 #include <cstring>
+#include <vector>
 
 using namespace std;
 
@@ -48,6 +49,7 @@ class Arquivo{
 
         // métodos privados
         void atualizaRCabecalho(); // atualizar cabeçalho conforme mudado.
+        void movePraEsquerda(FILE* lf, int vPilha[], int posicao);
 
     public:     // Componentes públicos
         // métodos púlicos
@@ -158,7 +160,7 @@ void Arquivo::lista(){
         if(ehArroba != '@'){ // se nao achar '@', não está removido
             // exiba os dados do registro no terminal
 
-// TODO: pensar numa maneira mais organizada de exibir os dados
+            // TODO: pensar numa maneira mais organizada de exibir os dados
             
             cout << endl;
             cout << rAux.cpf << endl;
@@ -319,13 +321,15 @@ void Arquivo::remove(const char * chave, Registro & reg){
 
 void Arquivo::compacta(){
     int topoAux; // elemento da lista
-    int * vPilha;
-    char * ehArroba;
+    //int * vPilha; // vetor de elementos da lista invertida 
+    char ehArroba; // char de verificação de remoção
+    int auxSwap, j=0;
+    std::vector<int> vPilha(rcabecalho.nRemovidos);
 
     if(rcabecalho.topo == -1) // se o a lista está vazia
         return; // acabe o método
     else{ // se não
-        vPilha = new int[rcabecalho.nRemovidos];
+        //vPilha = new int[rcabecalho.nRemovidos];
         dados = fopen(nome.c_str(), "r+b");
         // transforme a pilha em um vetor
         topoAux = rcabecalho.topo;
@@ -334,9 +338,9 @@ void Arquivo::compacta(){
                 fseek(dados, TAM_REG_CABECALHO + TAM_REG*topoAux, SEEK_SET);
             else // se está nos demais blocos
                 fseek(dados, (topoAux/REG_BLOCO)*TAM_BLOCO + (topoAux % REG_BLOCO)*TAM_REG, SEEK_SET);
-            fread(ehArroba, sizeof(char), 1, dados);
+            fread(&ehArroba, sizeof(char), 1, dados);
 
-            if(*ehArroba != '@'){ // se removeu certo, nao vai chegar aqui. mas caso chegue:
+            if(ehArroba != '@'){ // se removeu certo, nao vai chegar aqui. mas caso chegue:
                 fclose(dados);
                 return;
             }
@@ -344,18 +348,83 @@ void Arquivo::compacta(){
             vPilha[i] = topoAux;
             fread(&topoAux, sizeof(int), 1, dados); // atualize o proximo topo
         }
+        for(int i=0; i < rcabecalho.nRemovidos; i++)
+            for(int j=0; j < rcabecalho.nRemovidos; j++)
+                if(vPilha[i] < vPilha[j]){
+                    auxSwap = vPilha[i];
+                    vPilha[i] = vPilha[j];
+                    vPilha[j] = auxSwap;
+                }
+
+        while(!vPilha.empty()){
+            // verifique se todos os vetores estão no último bloco
+            bool ultimoBloco = true;
+            char ehArroba;
+            int auxElemento;
+            Registro regAux;
+            auxElemento = vPilha.pop_back();
+            if((auxElemento+1)/REG_BLOCO == 0) // primeiro bloco
+                fseek(dados, TAM_REG_CABECALHO + (auxElemento)*TAM_REG, SEEK_SET);
+            else // demais blocos
+                fseek(dados,(auxElemento/REG_BLOCO)*TAM_BLOCO + ((auxElemento%REG_BLOCO))*TAM_REG, SEEK_SET );
+            if(1 == fread(&regAux, TAM_REG, 1, dados)|| (fseek(dados, -TAM_REG, SEEK_CUR) && fread(&ehArroba, sizeof(char), 1, dados) == 1 && f) ){ // se há elementos à direita
+                
+                vPilha.push_back(auxElemento);
+                for(int i=0; i < nRemovidos; i++){
+                    ultimoBloco = (ultimoBloco) && (vPilha[i]/REG_BLOCO == rcabecalho.nBlocos);
+                }
+                if(ultimoBloco)
+                    // TODO: delete o bloco
+                else{
+                    auxElemento = vPilha.pop_back();
+                }
+            }
+        }
+        /*
+        for(int i = rcabecalho.nRemovidos; i > 0 && j < rcabecalho.nRemovidos; i--){
+            // va para o bloco à direita da posicao
+            if((vPilha[i]+1)/REG_BLOCO == 0) // primeiro bloco
+                fseek(dados, TAM_REG_CABECALHO + (vPilha[i]+1)*TAM_REG, SEEK_SET);
+            else // demais blocos
+                fseek(dados,(vPilha[i]/REG_BLOCO)*TAM_BLOCO + ((vPilha[i]%REG_BLOCO) + 1)*TAM_REG, SEEK_SET );
+            fread(&ehArroba, sizeof(char), 1, dados);
+            // verifique se à direita está removido
+            if(ehArroba == '@')
+                return;
+
+            fseek(dados, -sizeof(char), SEEK_CUR);
+        }
+        */
+        fclose(dados); // feche o arquivo
+       // delete vPilha; // delete o vetor
     }
 };
-
+void Arquivo::movePraEsquerda(FILE* lf, int vPilha[], int posicao){
+    char aux;
+    // verifique um para a direita
+    if((posicao+1)/REG_BLOCO == 0) // primeiro bloco
+        fseek(lf, TAM_REG_CABECALHO + (posicao+1)*TAM_REG, SEEK_SET);
+    else // demais blocos
+        fseek(lf, (posicao/REG_BLOCO)*TAM_BLOCO + ((posicao % REG_BLOCO) + 1)*TAM_REG, SEEK_SET);
+    // veja se o direito está na pilha
+    fwrite(&aux, sizeof(char), 1, lf);
+    if(aux == '@') // se não está, veja o outro direito
+        movePraEsquerda(lf, vPilha, posicao+1);
+    else{// se não está
+        //TODO
+    }
+    return;
+}
+/*
+*/
 void Arquivo::atualizaRCabecalho(){
     dados = fopen(nome.c_str(), "r+b");
     fwrite(&rcabecalho, TAM_REG_CABECALHO, 1, dados);
     fclose(dados);
 };
 
-int main(){
 /*
-*/
+int main(){
     int opcao;
     char repete;
     Arquivo arquivo("Arquivo de Dados");
@@ -437,6 +506,7 @@ int main(){
         cin >> repete;
         cout << endl;
     } while (repete == 's' || repete == 'S');
+*/
 
 
    /* Arquivo arqDados("oimundo");
@@ -496,9 +566,9 @@ int main(){
         cout << c.nome << endl;
         cout << c.idade << endl;
     }
-*/
    
     return 0;
 }
+*/
 
 #endif
