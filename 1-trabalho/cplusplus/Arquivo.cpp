@@ -186,7 +186,6 @@ int Arquivo::busca(const char * chave, Registro & R){
     int rrn = 0;
     int posicao = 0;        //variavel que percorre o bloco (seu valor é zero no início de cada bloco)
     int bloco_atual = 0;
-    int nRegRemovidos = 0;
 
     dados = fopen(nome.c_str(), "rb");
 
@@ -198,12 +197,12 @@ int Arquivo::busca(const char * chave, Registro & R){
         while(bloco_atual != rcabecalho.nBlocos){ //cada repetição percorre um bloco diferente do arquivo
             if (bloco_atual == 0){ //controle de qual bloco esta sendo percorrido
                 fseek(dados, TAM_REG_CABECALHO, SEEK_SET); //posiciona a posicao corrente no primeiro registro
-                while(rcabecalho.nRegistros + nRegRemovidos != rrn && posicao/REG_BLOCO != 1){ //estrutura usada para fazer a busca no primeiro bloco, que contém o registro de cabeçalho
+                while(rcabecalho.nRegistros + rcabecalho.nRemovidos != rrn && posicao/REG_BLOCO != 1){ //estrutura usada para fazer a busca no primeiro bloco, que contém o registro de cabeçalho
                     fread(chaveAux, sizeof(char), 12, dados); //guarda o cpf de cada registro na variavel chaveAux
                     if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
                         fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET); //posicao corrente vai para o inicio do registro encontrado
                         fread(&R, TAM_REG, 1, dados); //passa por referencia o registro encontrado
-                       // cout << "Registro encontrado!" << endl;
+                        cout << "Registro encontrado!" << endl;
                        // cout << "Nome: "<< R.nome << endl;
                        // cout << "CPF: " << R.cpf << endl;
                        // cout << "Idade: "<< R.idade << endl << endl;
@@ -216,9 +215,6 @@ int Arquivo::busca(const char * chave, Registro & R){
                         rrn++;
                         posicao++;
                         fseek(dados, TAM_REG*posicao + TAM_REG_CABECALHO, SEEK_SET); //posição corrente vai para o proximo registro
-                        if(chaveAux[1] == '@'){ //se o registro foi removido
-                            nRegRemovidos++;
-                        }
                     }
                 }
                 if(posicao/REG_BLOCO == 1){ //se o primeiro bloco ja tiver sido percorrido e chave ainda nao foi encontrada
@@ -233,7 +229,7 @@ int Arquivo::busca(const char * chave, Registro & R){
             else{ //se nao está no primeiro bloco
                 posicao = 0; //variavel que percorre o bloco é zerada, indicando inicio do novo bloco
                 fseek(dados, TAM_BLOCO*bloco_atual, SEEK_SET); //posicao corrente vai para o inicio do bloco
-                while(rcabecalho.nRegistros + nRegRemovidos != rrn && posicao/REG_BLOCO != 1){ //estrutura usada para fazer a busca nos demais blocos, que não contém o registro de cabeçalho
+                while(rcabecalho.nRegistros + rcabecalho.nRemovidos != rrn && posicao/REG_BLOCO != 1){ //estrutura usada para fazer a busca nos demais blocos, que não contém o registro de cabeçalho
                     fread(chaveAux, sizeof(char), 12, dados); //guarda o cpf de cada registro na variavel chaveAux
                     if(!strcmp(chaveAux, chave)){ //se forem iguais (achou chave)
                         fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET); //posicao corrente vai para o inicio do registro encontrado
@@ -251,9 +247,6 @@ int Arquivo::busca(const char * chave, Registro & R){
                         rrn++;
                         posicao++;
                         fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET); //posição corrente vai para o proximo registro
-                        if(chaveAux[1] == '@'){
-                            nRegRemovidos++;
-                        }
                     }
                 }
                 if(posicao/REG_BLOCO == 1){
@@ -298,7 +291,7 @@ void Arquivo::remove(const char * chave, Registro & reg){
     }
     else if(rrn >= REG_BLOCO){ //se o registro estiver a partir do segundo bloco
         
-        for(int i=0; i<=rrn; i++){ //laço utilizado para saber quantos blocos tem no registro
+        for(int i=0; i<=rrn; i++){ //laço utilizado para saber quantos registros tem no bloco
             posicao++;
             if(posicao == REG_BLOCO){
                 bloco_atual++;
@@ -354,36 +347,33 @@ void Arquivo::atualizaRCabecalho(){
 };
 
 int main(){
-/*
-*/
-    int opcao;
-    char repete;
+    int opcao; //variavel que guarda a opcao do menu
+    char repete; //variavel que controla o do-while
     Arquivo arquivo("Arquivo de Dados");
     Registro registro;
-    string palavra;
-    char linha[16];
-    cout << "Nome: ";
-    fgets(registro.nome, 51, stdin);
-    cout << "cpf: ";
-    cin >> registro.cpf;
-    cout << registro.nome << endl;
-    cout << registro.cpf;
+    
     Registro b;
     Registro a;
     Registro d;
     Registro c, aux;
-    char p;
+    
     sprintf(a.nome, "Gabrieli Santos");
     sprintf(a.cpf, "41458175839");
     a.idade = 20;
 
     sprintf(b.nome, "Gianna Barbirato");
-    sprintf(b.cpf, "41193784468");
+    sprintf(b.cpf, "01010101010");
     b.idade = 55;
 
     sprintf(d.nome, "Micheli Santos");
-    sprintf(d.cpf, "43810760870");
+    sprintf(d.cpf, "02020202020");
     d.idade = 17;
+    arquivo.insere(a);
+    arquivo.insere(a);
+    arquivo.insere(a);
+    arquivo.insere(a);
+    arquivo.insere(a);
+    arquivo.insere(a);
     arquivo.insere(a);
     arquivo.insere(b);
     arquivo.insere(d);
@@ -437,66 +427,6 @@ int main(){
         cin >> repete;
         cout << endl;
     } while (repete == 's' || repete == 'S');
-
-
-   /* Arquivo arqDados("oimundo");
-    Registro b;
-    Registro a;
-    Registro d;
-    Registro c, aux;
-    char p;
-    sprintf(a.nome, "Gabrieli Santos");
-    sprintf(a.cpf, "41458175839");
-    a.idade = 20;
-
-    sprintf(b.nome, "Gianna Barbirato");
-    sprintf(b.cpf, "41193784468");
-    b.idade = 55;
-
-    sprintf(d.nome, "Micheli Santos");
-    sprintf(d.cpf, "43810760870");
-    d.idade = 17;
-
-    for(int i=0; i < REG_BLOCO; i++){
-        arqDados.insere(a);
-    }
-    arqDados.insere(b);
-    arqDados.insere(b);
-    arqDados.insere(d);
-    arqDados.remove(a);
-    arqDados.insere(d);
-    arqDados.lista();
-
-    /*if(arqDados.busca(d.cpf,c) != -1){
-        cout << c.cpf << endl;
-        cout << c.nome << endl;
-        cout << c.idade << endl;
-        cout << "RRN: " << arqDados.busca(d.cpf,c) << endl;
-        cout << endl;
-    }
-
-    if(arqDados.busca(a.cpf,c) != -1){
-        cout << c.cpf << endl;
-        cout << c.nome << endl;
-        cout << c.idade << endl;
-        cout << "RRN: " << arqDados.busca(a.cpf,c) << endl;
-        cout << endl;
-    }
-    
-    if(arqDados.busca(b.cpf,c) != -1){
-        cout << c.cpf << endl;
-        cout << c.nome << endl;
-        cout << c.idade << endl;
-        cout << "RRN: " << arqDados.busca(b.cpf,c) << endl;
-        cout << endl;
-    }
-
-    if(arqDados.busca("01010101010",c) != -1){
-        cout << c.cpf << endl;
-        cout << c.nome << endl;
-        cout << c.idade << endl;
-    }
-*/
    
     return 0;
 }
