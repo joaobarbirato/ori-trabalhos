@@ -49,7 +49,6 @@ class Arquivo{
 
         // métodos privados
         void atualizaRCabecalho(); // atualizar cabeçalho conforme mudado.
-        void movePraEsquerda(FILE* lf, int vPilha[], int posicao);
 
     public:     // Componentes públicos
         // métodos púlicos
@@ -277,34 +276,21 @@ void Arquivo::remove(const char * chave, Registro & reg){
     char arroba = '@';
     Registro rAux;
     int rrn;
-    int posicao = 0;
-    int bloco_atual;
 
     rrn = busca(chave, rAux);
     if(rrn == -1)
         return;
 
     dados = fopen(nome.c_str(), "r+b");
-    if(rrn >= 0 && rrn < REG_BLOCO){ //se só existir um bloco
+    if(rrn >= 0 && rrn < REG_BLOCO) //se só existir um bloco
         fseek(dados, TAM_REG_CABECALHO + rrn*TAM_REG, SEEK_SET); //posiciona na posicao do resgistro a ser removido
-        fwrite(&arroba, sizeof(arroba), 1, dados); //escreve o caractere '@' no primeiro byte do registro
-        fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados); //escreve o topo da lista invertida nos quatro bytes seguintes criando uma lista invertida encadeada
-        rcabecalho.topo = rrn; //atualiza o topo
-    }
-    else if(rrn >= REG_BLOCO){ //se o registro estiver a partir do segundo bloco
-        
-        for(int i=0; i<=rrn; i++){ //laço utilizado para saber quantos registros tem no bloco
-            posicao++;
-            if(posicao == REG_BLOCO){
-                bloco_atual++;
-                posicao = 0; //variavel é sempre zerada no inicio de cada bloco
-            }
-        }
-        fseek(dados, TAM_REG*posicao + TAM_BLOCO*bloco_atual, SEEK_SET); //posiciona no inicio de cada bloco
-        fwrite(&arroba, sizeof(arroba), 1, dados); //escreve o caractere '@' no primeiro byte do registro
-        fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados); //escreve o topo da lista invertida nos quatro bytes seguintes criando uma lista invertida encadeada
-        rcabecalho.topo = rrn; //atualiza o topo
-    }
+
+    else if(rrn >= REG_BLOCO) //se o registro estiver a partir do segundo bloco
+        fseek(dados, (TAM_BLOCO)*(rrn/REG_BLOCO) + (TAM_REG)*(rrn % REG_BLOCO), SEEK_SET); //posiciona no inicio de cada bloco
+    
+    fwrite(&arroba, sizeof(arroba), 1, dados); //escreve o caractere '@' no primeiro byte do registro
+    fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados); //escreve o topo da lista invertida nos quatro bytes seguintes criando uma lista invertida encadeada
+    rcabecalho.topo = rrn; //atualiza o topo
     // removendo o registro
     rcabecalho.nRegistros--; // diminua o número de registros
     rcabecalho.nRemovidos++;
@@ -312,7 +298,37 @@ void Arquivo::remove(const char * chave, Registro & reg){
     atualizaRCabecalho(); // e atualize o cabeçalho.
 }; //fim remoção
 
-void Arquivo::compacta(){/*
+void Arquivo::compacta(){
+    Registro * proxUltimo;  // proximo registro pra ser o último
+    Registro rAux;          // aux pra remoção
+    int * proxTopo;
+    char ehArroba;
+    if(rcabecalho.topo == -1) // se a lista está vazia
+        return ; // acabe o método
+
+    proxUltimo = new Registro;
+    proxTopo = new int;
+
+    dados = fopen(nome.c_str(), "r+b");
+//    topoAux = rcabecalho.topo;
+
+    for(int i=0; i < rcabecalho.nRemovidos; i++){
+        // o próximo topo
+        if(rcabecalho.topo/REG_BLOCO == 0) // se está no primeiro bloco
+            fseek(dados, TAM_REG_CABECALHO + TAM_REG*rcabecalho.topo, SEEK_SET);
+        else // se está nos demais blocos
+            fseek(dados, (rcabecalho.topo/REG_BLOCO)*TAM_BLOCO + (rcabecalho.topo % REG_BLOCO)*TAM_REG, SEEK_SET);
+        fread(&ehArroba, sizeof(char), 1, dados);
+
+        if(ehArroba != '@'){ // se removeu certo, nao vai chegar aqui. mas caso chegue:
+            fclose(dados);
+            return;
+        }
+        fread(&proxTopo, sizeof(int), 1, dados); // atualize o proximo topo
+
+        //
+    }
+    /*
     int topoAux; // elemento da lista
     //int * vPilha; // vetor de elementos da lista invertida 
     char ehArroba; // char de verificação de remoção
@@ -322,24 +338,6 @@ void Arquivo::compacta(){/*
     if(rcabecalho.topo == -1) // se o a lista está vazia
         return; // acabe o método
     else{ // se não
-        //vPilha = new int[rcabecalho.nRemovidos];
-        dados = fopen(nome.c_str(), "r+b");
-        // transforme a pilha em um vetor
-        topoAux = rcabecalho.topo;
-        for(int i=0; i < rcabecalho.nRemovidos; i++){
-            if(topoAux/REG_BLOCO == 0) // se está no primeiro bloco
-                fseek(dados, TAM_REG_CABECALHO + TAM_REG*topoAux, SEEK_SET);
-            else // se está nos demais blocos
-                fseek(dados, (topoAux/REG_BLOCO)*TAM_BLOCO + (topoAux % REG_BLOCO)*TAM_REG, SEEK_SET);
-            fread(&ehArroba, sizeof(char), 1, dados);
-
-            if(ehArroba != '@'){ // se removeu certo, nao vai chegar aqui. mas caso chegue:
-                fclose(dados);
-                return;
-            }
-
-            vPilha[i] = topoAux;
-            fread(&topoAux, sizeof(int), 1, dados); // atualize o proximo topo
         }
         for(int i=0; i < rcabecalho.nRemovidos; i++)
             for(int j=0; j < rcabecalho.nRemovidos; j++)
@@ -348,66 +346,10 @@ void Arquivo::compacta(){/*
                     vPilha[i] = vPilha[j];
                     vPilha[j] = auxSwap;
                 }
-
-        while(!vPilha.empty()){
-            // verifique se todos os vetores estão no último bloco
-            bool ultimoBloco = true;
-            char ehArroba;
-            int auxElemento;
-            Registro regAux;
-            auxElemento = vPilha.pop_back();
-            if((auxElemento+1)/REG_BLOCO == 0) // primeiro bloco
-                fseek(dados, TAM_REG_CABECALHO + (auxElemento)*TAM_REG, SEEK_SET);
-            else // demais blocos
-                fseek(dados,(auxElemento/REG_BLOCO)*TAM_BLOCO + ((auxElemento%REG_BLOCO))*TAM_REG, SEEK_SET );
-            if(1 == fread(&regAux, TAM_REG, 1, dados)|| (fseek(dados, -TAM_REG, SEEK_CUR) && fread(&ehArroba, sizeof(char), 1, dados) == 1 && f) ){ // se há elementos à direita
-                
-                vPilha.push_back(auxElemento);
-                for(int i=0; i < nRemovidos; i++){
-                    ultimoBloco = (ultimoBloco) && (vPilha[i]/REG_BLOCO == rcabecalho.nBlocos);
-                }
-                if(ultimoBloco)
-                    // TODO: delete o bloco
-                else{
-                    auxElemento = vPilha.pop_back();
-                }
-            }
-        }
-        /*
-        for(int i = rcabecalho.nRemovidos; i > 0 && j < rcabecalho.nRemovidos; i--){
-            // va para o bloco à direita da posicao
-            if((vPilha[i]+1)/REG_BLOCO == 0) // primeiro bloco
-                fseek(dados, TAM_REG_CABECALHO + (vPilha[i]+1)*TAM_REG, SEEK_SET);
-            else // demais blocos
-                fseek(dados,(vPilha[i]/REG_BLOCO)*TAM_BLOCO + ((vPilha[i]%REG_BLOCO) + 1)*TAM_REG, SEEK_SET );
-            fread(&ehArroba, sizeof(char), 1, dados);
-            // verifique se à direita está removido
-            if(ehArroba == '@')
-                return;
-
-            fseek(dados, -sizeof(char), SEEK_CUR);
-        }
-        fclose(dados); // feche o arquivo
-       // delete vPilha; // delete o vetor
-    }
         */
+
+        
 };
-void Arquivo::movePraEsquerda(FILE* lf, int vPilha[], int posicao){
-    char aux;
-    // verifique um para a direita
-    if((posicao+1)/REG_BLOCO == 0) // primeiro bloco
-        fseek(lf, TAM_REG_CABECALHO + (posicao+1)*TAM_REG, SEEK_SET);
-    else // demais blocos
-        fseek(lf, (posicao/REG_BLOCO)*TAM_BLOCO + ((posicao % REG_BLOCO) + 1)*TAM_REG, SEEK_SET);
-    // veja se o direito está na pilha
-    fwrite(&aux, sizeof(char), 1, lf);
-    if(aux == '@') // se não está, veja o outro direito
-        movePraEsquerda(lf, vPilha, posicao+1);
-    else{// se não está
-        //TODO
-    }
-    return;
-}
 
 void Arquivo::atualizaRCabecalho(){
     dados = fopen(nome.c_str(), "r+b");
@@ -415,8 +357,6 @@ void Arquivo::atualizaRCabecalho(){
     fclose(dados);
 };
 
-/*
-*/
 int main(){
     int opcao; //variavel que guarda a opcao do menu
     char repete; //variavel que controla o do-while
@@ -501,5 +441,7 @@ int main(){
    
     return 0;
 }
+/*
+*/
 
 #endif
