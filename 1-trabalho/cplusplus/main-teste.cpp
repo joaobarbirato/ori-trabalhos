@@ -4,76 +4,66 @@
 using namespace std;
 
 int main(){
+	int opcao; //variavel que guarda a opcao do menu
+    int repete; //variavel que controla o do-while
+    Arquivo arquivo("Arquivo de Dados");
+    Registro registro;
+    
+    do{
+        cout << "***MENU DE OPCOES***" << endl << endl;
+        cout << "1. Inserir registro" << endl;
+        cout << "2. Buscar registro" << endl;
+        cout << "3. Remover registro" << endl;
+        cout << "4. Listar registros" << endl;
+        cout << "5. Compactar arquivo" << endl << endl;
+        cout << "Escolha uma opcao: ";
+        cin >> opcao;
+        cout << endl;
 
-	/*
-	Bloco b;
-	Registro r, a;
-	sprintf(r.cpf, "43710760870");
-	sprintf(r.nome, "Gabriela Purini Chermonte");
-	sprintf(r.outro, "e eu vou saber");
-	r.idade = 20;
+        switch (opcao){
+            case 1:
+                cout << "Nome: ";
+                cin.ignore(51, '\n');
+                cin.get(registro.nome, 51);
+                cout << endl;
+                cout << "CPF: ";
+                cin >> registro.cpf;
+                cout << endl;
+                cout << "Idade: ";
+                cin >> registro.idade;
+                cout << endl;
+                arquivo.insere(registro);
+                cout << "O registro foi inserido no Arquivo de Dados!" << endl << endl;
+                break;
+            case 2:
+                cout << "Informe o CPF: ";
+                cin >> registro.cpf;
+                cout << endl;
+                arquivo.busca(registro.cpf, registro);
+                break;
+            case 3:
+                cout << "Informe o CPF: ";
+                cin >> registro.cpf;
+                cout << endl;
+                arquivo.remove(registro.cpf, registro);
+                cout << "O registro foi removido do Arquivo de Dados" << endl;
+                break;
+            case 4:
+                arquivo.lista();
+                break;
+            case 5:
+                arquivo.compacta();
+                cout << "O arquivo foi compactado!" << endl;
+                break;
+            default:
+                cout << "Opcao invalida !!" << endl;
+                cin.ignore(256, '\n');
+        }
 
-	FILE * teste = fopen("oimundo","rb");
-	fread(&b, TAM_BLOCO, 1, teste);
-	arqDados.insere(r);
-	fseek(teste, TAM_BLOCO_CABECALHO, SEEK_SET);
-	fread(&a, TAM_BLOCO, 1, teste);
-
-	cout << a.cpf << endl;
-	cout << a.nome << endl;
-	cout << a.outro << endl;
-	cout << a.idade << endl;
-
-*/
-
+        cout << "Voltar ao MENU DE OPCOES? [1 para SIM/2 para NAO]: ";
+        cin >> repete;
+        cout << endl;
+    } while (repete == 1);
 	
-
-	Arquivo arqDados("oimundo");
-	Registro b;
-	Registro a;
-	Registro d;
-	Registro c;
-	char p;
-	sprintf(a.nome, "Joao Gabriel Melo Barbirato");
-	sprintf(a.cpf, "06460532486");
-	a.idade = 21;
-
-	sprintf(b.nome, "Gianna Melo Barbirato");
-	sprintf(b.cpf, "41193784468");
-	b.idade = 55;
-
-	sprintf(d.nome, "Gabriela Purini Chermont");
-	sprintf(d.cpf, "43810760870");
-	d.idade = 20;
-
-	for(int i=0; i < 7; i++){
-		arqDados.insere(a);
-	}
-	arqDados.insere(b);
-	arqDados.insere(b);
-	arqDados.insere(d);
-	//arqDados.lista();
-	arqDados.busca(d.cpf,c);
-
-	cout << c.cpf << endl;
-	cout << c.nome << endl;
-	cout << c.idade << endl;
-
-	//cout << b.cabecalho.topoRegistros << endl;
-	//cout << b.cabecalho.nRegistros << endl;
-	//cout << b.cabecalho.inicio << endl;
-	//cout << b.fimBloco << endl;
-	
-	//	FILE * teste = fopen("oimundo", "rb");
-	//fseek(teste, TAM_BLOCO + 2*TAM_REG, SEEK_SET );
-	//fread(&c, TAM_REG, 1, teste);
-	//fclose(teste);
-/*
-	fread(&p, sizeof(char), 1, teste);
-	cout << p << endl;
-	fseek(teste, TAM_REG_CABECALHO, SEEK_SET);
-	if(arqDados.busca("41193784468", c))
-		cout << c.nome << endl;
-*/
 	return EXIT_SUCCESS;
 }

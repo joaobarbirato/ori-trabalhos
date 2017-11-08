@@ -166,8 +166,8 @@ void Arquivo::lista(){
             // TODO: pensar numa maneira mais organizada de exibir os dados
             
             cout << endl;
-            cout << rAux.cpf << endl;
             cout << rAux.nome << endl;
+            cout << rAux.cpf << endl;
             cout << rAux.idade << endl;
             cout << endl;
         }else // se está removido, deixe isso explícito.
@@ -461,7 +461,7 @@ void Arquivo::atualizaRCabecalho(){
 
 int main(){
     int opcao; //variavel que guarda a opcao do menu
-    char repete; //variavel que controla o do-while
+    int repete; //variavel que controla o do-while
     Arquivo arquivo("Arquivo de Dados");
     Registro registro;
     
@@ -490,7 +490,6 @@ int main(){
     arquivo.insere(a);
     arquivo.insere(b);
     arquivo.insere(d);
-    int teste;
     do{
         cout << "***MENU DE OPCOES***" << endl << endl;
         cout << "1. Inserir registro" << endl;
@@ -500,16 +499,21 @@ int main(){
         cout << "5. Compactar arquivo" << endl << endl;
         cout << "Escolha uma opcao: ";
         cin >> opcao;
-        cin.clear();
         cout << endl;
 
         switch (opcao){
             case 1:
-                cout << "digite qualquer coisa: ";
-                cin >> teste;
                 cout << "Nome: ";
-                fgets(registro.nome, 51, stdin);
-                cout << registro.nome << endl;
+                cin.ignore(51, '\n');
+                cin.get(registro.nome, 51);
+                cout << endl;
+                cout << "CPF: ";
+                cin >> registro.cpf;
+                cout << endl;
+                cout << "Idade: ";
+                cin >> registro.idade;
+                cout << endl;
+                arquivo.insere(registro);
                 cout << "O registro foi inserido no Arquivo de Dados!" << endl << endl;
                 break;
             case 2:
@@ -534,16 +538,15 @@ int main(){
                 break;
             default:
                 cout << "Opcao invalida !!" << endl;
+                cin.ignore(256, '\n');
         }
 
-        cout << "Voltar ao MENU DE OPCOES? [S/N]: ";
+        cout << "Voltar ao MENU DE OPCOES? [1 para SIM/2 para NAO]: ";
         cin >> repete;
         cout << endl;
-    } while (repete == 's' || repete == 'S');
+    } while (repete == 1);
    
     return 0;
 }
-/*
-*/
 
 #endif
