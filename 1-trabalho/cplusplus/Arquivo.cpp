@@ -50,7 +50,6 @@ class Arquivo{
 
         // métodos privados
         void atualizaRCabecalho(); // atualizar cabeçalho conforme mudado.
-        void remove_rrn(const int &, Registro &);
 
     public:     // Componentes públicos
         // métodos púlicos
@@ -127,7 +126,6 @@ void Arquivo::insere(const Registro & reg){
         else{ // para demais blocos:
             // navegue pelos blocos até o topo da lista
             fseek(dados, TAM_BLOCO * (rcabecalho.topo/REG_BLOCO) + ((rcabecalho.topo) % (REG_BLOCO))*TAM_REG  + sizeof('@'), SEEK_SET);
-            cout << "TADAIMA!" << endl;
         }
         // posicionado o ponteiro,
         fread(&rrn, sizeof(int), 1, dados); // guarde o próximo da lista (novo topo)
@@ -172,8 +170,7 @@ void Arquivo::lista(){
             cout << endl;
         }else // se está removido, deixe isso explícito.
             cout << endl << "REMOVIDO" << endl << endl << endl << endl;
-
-        if(contRRN == (rcabecalho.nBlocos-1)*REG_BLOCO) // se chegar no tamanho máximo de registros no bloco
+        if((contRRN)%REG_BLOCO == 0) // se chegar no tamanho máximo de registros no bloco
             fseek(dados, TAM_BLOCO*(contRRN/REG_BLOCO), SEEK_SET); // vá para o próximo
         //cout << contRRN << endl;
     }
@@ -305,30 +302,6 @@ void Arquivo::remove(const char * chave, Registro & reg){
     atualizaRCabecalho(); // e atualize o cabeçalho.
 }; //fim remoção
 
-void Arquivo::remove_rrn(const int & rrn, Registro & reg){
-    char arroba = '@';
-    Registro rAux;
-
-    if(rrn == -1)
-        return;
-
-    dados = fopen(nome.c_str(), "r+b");
-    if(rrn >= 0 && rrn < REG_BLOCO) //se só existir um bloco
-        fseek(dados, TAM_REG_CABECALHO + rrn*TAM_REG, SEEK_SET); //posiciona na posicao do resgistro a ser removido
-
-    else if(rrn >= REG_BLOCO) //se o registro estiver a partir do segundo bloco
-        fseek(dados, (TAM_BLOCO)*(rrn/REG_BLOCO) + (TAM_REG)*(rrn % REG_BLOCO), SEEK_SET); //posiciona no inicio de cada bloco
-    
-    fwrite(&arroba, sizeof(arroba), 1, dados); //escreve o caractere '@' no primeiro byte do registro
-    fwrite(&rcabecalho.topo, sizeof(rcabecalho.topo), 1, dados); //escreve o topo da lista invertida nos quatro bytes seguintes criando uma lista invertida encadeada
-    rcabecalho.topo = rrn; //atualiza o topo
-    // removendo o registro
-    rcabecalho.nRegistros--; // diminua o número de registros
-    rcabecalho.nRemovidos++;
-    fclose(dados); // feche o arquivo lógico
-    atualizaRCabecalho(); // e atualize o cabeçalho.
-}; //fim remoção_rrn
-
 void Arquivo::compacta(){
     Registro rAux;          // aux pra remoção
     RegistroCabecalho rcAux;
@@ -407,18 +380,20 @@ void Arquivo::compacta(){
             }
             rrnRemovidos.pop_back();
         }
-        cout << rcabecalho.topo << endl;
+        cout << "tadaima!" << endl;
         rcabecalho.topo = rrnRemovidos[i];
+
     }
     delete [] estaCompactado;
     // se é necessário deletar blocos:
     if(rcabecalho.nRemovidos >= (rcabecalho.nRemovidos + rcabecalho.nRegistros)%REG_BLOCO){
-        novoNBlocos = (rcabecalho.nBlocos-(rcabecalho.nRegistros + rcabecalho.nRemovidos)/REG_BLOCO);
+        novoNBlocos = (rcabecalho.nBlocos-(rcabecalho.nRegistros + rcabecalho.nRemovidos)/(REG_BLOCO*rcabecalho.nBlocos));
         novoNRegistros = rcabecalho.nRegistros;
         novoNRemovidos = rcabecalho.nRemovidos - (rcabecalho.nRemovidos + rcabecalho.nRegistros)%REG_BLOCO;
 
         //bufferRegistros = new Registro[REG_BLOCO];
-
+        cout << rcabecalho.nBlocos << endl;
+        cout << (rcabecalho.nRegistros + rcabecalho.nRemovidos)/(REG_BLOCO*rcabecalho.nBlocos) << endl;
         bufferCabecalho.topo = rcabecalho.topo;
         bufferCabecalho.nBlocos = novoNBlocos;
         bufferCabecalho.nRemovidos = novoNRemovidos;
@@ -437,10 +412,16 @@ void Arquivo::compacta(){
                 fseek(dados, i*TAM_BLOCO, SEEK_SET);
             }
             fread(bufferRegistros, TAM_REG, REG_BLOCO, dados);
+            /*for(int j=0; j < REG_BLOCO; i++){
+                cout << bufferRegistros[j].cpf << endl;
+                cout << bufferRegistros[j].nome << endl;
+                cout << bufferRegistros[j].idade << endl;
+            }*/
             fwrite(bufferRegistros, TAM_REG, REG_BLOCO, dadosTemp);
             fseek(dadosTemp, TAM_REG*(1-REG_BLOCO) - 1, SEEK_CUR);
             fwrite(&PIPE, sizeof(char), 1, dadosTemp);
         }
+        rcabecalho = bufferCabecalho;
         fclose(dadosTemp);
         std::rename((nome+"-aux").c_str(), nome.c_str()); // remova o arquivo auxiliar
         
