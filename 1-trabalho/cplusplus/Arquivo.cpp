@@ -334,7 +334,7 @@ void Arquivo::compacta(){
     RegistroCabecalho rcAux;
     //RegistroCabecalho rcabAux;
     FILE * dadosTemp;
-    Registro * bufferRegistros;
+    Registro bufferRegistros[REG_BLOCO];
     RegistroCabecalho bufferCabecalho;
     int proxTopo;
     int novoNBlocos, novoNRegistros, novoNRemovidos;
@@ -417,7 +417,7 @@ void Arquivo::compacta(){
         novoNRegistros = rcabecalho.nRegistros;
         novoNRemovidos = rcabecalho.nRemovidos - (rcabecalho.nRemovidos + rcabecalho.nRegistros)%REG_BLOCO;
 
-        bufferRegistros = new Registro[REG_BLOCO];
+        //bufferRegistros = new Registro[REG_BLOCO];
 
         bufferCabecalho.topo = rcabecalho.topo;
         bufferCabecalho.nBlocos = novoNBlocos;
@@ -436,20 +436,17 @@ void Arquivo::compacta(){
                 fseek(dadosTemp, i*TAM_BLOCO, SEEK_SET);
                 fseek(dados, i*TAM_BLOCO, SEEK_SET);
             }
-            fread(&rAux, TAM_REG, 1, dados);
-            cout << rAux.cpf << endl;
-            cout << rAux.nome << endl;
-            cout << rAux.idade << endl;
+            fread(bufferRegistros, TAM_REG, REG_BLOCO, dados);
             fwrite(bufferRegistros, TAM_REG, REG_BLOCO, dadosTemp);
             fseek(dadosTemp, TAM_REG*(1-REG_BLOCO) - 1, SEEK_CUR);
             fwrite(&PIPE, sizeof(char), 1, dadosTemp);
         }
         fclose(dadosTemp);
         std::rename((nome+"-aux").c_str(), nome.c_str()); // remova o arquivo auxiliar
-            
-
-        //fwrite(bufferBloco, TAM_BLOCO*(rcabecalho.nBlocos-(rcabecalho.nRegistros + rcabecalho.nRemovidos)/REG_BLOCO), 1, dados);
+        
     }
+    /*
+    */
     fclose(dados);
 };
 
@@ -458,7 +455,6 @@ void Arquivo::atualizaRCabecalho(){
     fwrite(&rcabecalho, TAM_REG_CABECALHO, 1, dados);
     fclose(dados);
 };
-
 int main(){
     int opcao; //variavel que guarda a opcao do menu
     int repete; //variavel que controla o do-while
@@ -548,5 +544,6 @@ int main(){
    
     return 0;
 }
-
+/*
+*/
 #endif
