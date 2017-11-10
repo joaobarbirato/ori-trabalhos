@@ -172,7 +172,6 @@ void Arquivo::lista(){
             cout << endl << "REMOVIDO" << endl << endl << endl << endl;
         if((contRRN)%REG_BLOCO == 0) // se chegar no tamanho máximo de registros no bloco
             fseek(dados, TAM_BLOCO*(contRRN/REG_BLOCO), SEEK_SET); // vá para o próximo
-        //cout << contRRN << endl;
     }
     fclose(dados);
 }; // fim lista
@@ -313,7 +312,7 @@ void Arquivo::compacta(){
     int novoNBlocos, novoNRegistros, novoNRemovidos;
     char ehArroba;
     char arroba = '@';
-    int i = 0, j=0, rrnUltimo;
+    int i = 0, j=0, k=0, rrnUltimo;
     bool * estaCompactado;      // vetor para verificar se o arquivo já está compactado
     bool estaCompactadoAnd;     // and de todos os estacompactado
     std::vector<int> ultimosRegistros, rrnRemovidos;
@@ -324,21 +323,22 @@ void Arquivo::compacta(){
 
     dados = fopen(nome.c_str(), "r+b");
 
-    // verifique se já está compactado
+    // mapeie os registros retirados e os inseridos
     rrnUltimo = rcabecalho.nRegistros + rcabecalho.nRemovidos - 1;
-    while(i < rcabecalho.nRemovidos){
+    while(i < rcabecalho.nRemovidos || k < rcabecalho.nRemovidos){
         if(rrnUltimo/REG_BLOCO == 0) // se está no primeiro bloco
             fseek(dados, TAM_REG_CABECALHO + TAM_REG*rrnUltimo, SEEK_SET);
         else // se está nos demais blocos
             fseek(dados, (rrnUltimo/REG_BLOCO)*TAM_BLOCO + (rrnUltimo % REG_BLOCO)*TAM_REG, SEEK_SET);
         fread(&ehArroba, sizeof(char), 1, dados);
-        if(ehArroba != '@'){
+        if(ehArroba != '@' && i < rcabecalho.nRemovidos){
             i++;
             ultimosRegistros.push_back(rrnUltimo);
             estaCompactado[j] = false;
-        }else{
+        }else if(ehArroba == '@'){
             rrnRemovidos.push_back(rrnUltimo);
             estaCompactado[j] = true;
+            k++;
         }
         j++;
         rrnUltimo--;
@@ -348,6 +348,7 @@ void Arquivo::compacta(){
     for(int i=1; i < rcabecalho.nRemovidos; i++)
         estaCompactadoAnd = estaCompactadoAnd && estaCompactado[i];
 
+    // verifique se já está compactado
     if(!estaCompactadoAnd){ // não está compactado
         for(int i=0, j=0; i< ultimosRegistros.size(); i++){
             if(ultimosRegistros[j] > rrnRemovidos.back()){
@@ -372,7 +373,6 @@ void Arquivo::compacta(){
                     fseek(dados, TAM_BLOCO * (rrnRemovidos.back()/REG_BLOCO) + (rrnRemovidos.back() % REG_BLOCO)*TAM_REG + sizeof('@'), SEEK_SET);
                 // posicionado o ponteiro,
                 fread(&rrnUltimo, sizeof(int), 1, dados); // guarde o próximo da lista (novo topo)
-                //cout << rrnUltimo << endl << endl;
                 rcabecalho.topo = rrnUltimo;
                 fseek(dados, -(sizeof('@')+sizeof(int)), SEEK_CUR); // volte o ponteiro
                 fwrite(&rAux, TAM_REG, 1, dados); // escreva o registro
@@ -380,20 +380,16 @@ void Arquivo::compacta(){
             }
             rrnRemovidos.pop_back();
         }
-        cout << "tadaima!" << endl;
         rcabecalho.topo = rrnRemovidos[i];
 
     }
-    delete [] estaCompactado;
+    //delete [] estaCompactado;
     // se é necessário deletar blocos:
-    if(rcabecalho.nRemovidos >= (rcabecalho.nRemovidos + rcabecalho.nRegistros)%REG_BLOCO){
-        novoNBlocos = (rcabecalho.nBlocos-(rcabecalho.nRegistros + rcabecalho.nRemovidos)/(REG_BLOCO*rcabecalho.nBlocos));
+    if(rcabecalho.nRemovidos >= (rcabecalho.nRemovidos + rcabecalho.nRegistros)%REG_BLOCO && rcabecalho.nRemovidos >= REG_BLOCO){
+        novoNBlocos = rcabecalho.nBlocos + (rcabecalho.nRegistros + rcabecalho.nRemovidos)/(REG_BLOCO* (rcabecalho.nRemovidos) ) - rcabecalho.nRemovidos/REG_BLOCO;
         novoNRegistros = rcabecalho.nRegistros;
         novoNRemovidos = rcabecalho.nRemovidos - (rcabecalho.nRemovidos + rcabecalho.nRegistros)%REG_BLOCO;
 
-        //bufferRegistros = new Registro[REG_BLOCO];
-        cout << rcabecalho.nBlocos << endl;
-        cout << (rcabecalho.nRegistros + rcabecalho.nRemovidos)/(REG_BLOCO*rcabecalho.nBlocos) << endl;
         bufferCabecalho.topo = rcabecalho.topo;
         bufferCabecalho.nBlocos = novoNBlocos;
         bufferCabecalho.nRemovidos = novoNRemovidos;
@@ -401,7 +397,6 @@ void Arquivo::compacta(){
         // guarde tudo num arquivo temporário        
         dadosTemp = fopen((nome + "-aux").c_str(), "w+b");
         for(int i=0; i < novoNBlocos; i++){
-            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~TEM ALGUM ERRO NESSES FSEEK FWRITE~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
             if(i == 0){ // se está copiando do primeiro bloco
                 fseek(dadosTemp, 0, SEEK_SET);
                 fwrite(&bufferCabecalho, TAM_REG_CABECALHO, 1, dadosTemp);
@@ -412,23 +407,18 @@ void Arquivo::compacta(){
                 fseek(dados, i*TAM_BLOCO, SEEK_SET);
             }
             fread(bufferRegistros, TAM_REG, REG_BLOCO, dados);
-            /*for(int j=0; j < REG_BLOCO; i++){
-                cout << bufferRegistros[j].cpf << endl;
-                cout << bufferRegistros[j].nome << endl;
-                cout << bufferRegistros[j].idade << endl;
-            }*/
+            // valide o bloco com o caractere '|'
             fwrite(bufferRegistros, TAM_REG, REG_BLOCO, dadosTemp);
-            fseek(dadosTemp, TAM_REG*(1-REG_BLOCO) - 1, SEEK_CUR);
+            fseek(dadosTemp, (i+1)*TAM_BLOCO - 1, SEEK_SET);
             fwrite(&PIPE, sizeof(char), 1, dadosTemp);
         }
         rcabecalho = bufferCabecalho;
         fclose(dadosTemp);
         std::rename((nome+"-aux").c_str(), nome.c_str()); // remova o arquivo auxiliar
         
-    }
-    /*
-    */
-    fclose(dados);
+    }else
+        fclose(dados);
+        
 };
 
 void Arquivo::atualizaRCabecalho(){
