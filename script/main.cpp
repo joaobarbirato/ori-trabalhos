@@ -1,5 +1,5 @@
 #include <iostream>
-#include "/Documents/ORI/git/ori-trabalhos/1-trabalho/cplusplus/src/Arquivo.hpp"
+#include "../src/Arquivo.hpp"
 
 using namespace std;
 

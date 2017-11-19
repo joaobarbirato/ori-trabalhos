@@ -3,8 +3,8 @@
  *  TRABALHO 1: Implementação de arquivo sem ordenação
  *  DISCIPLINA: Organização e Recuperação da Informação
  *  DOCENTE: Ricardo Rodrigues Ciferri
- *  DISCENTES:  Gabrieli Santos                 RA: REG_BLOCO26523
- *              João Gabriel Melo Barbirato     RA: REG_BLOCO26546
+ *  DISCENTES:  Gabrieli Santos                 RA: 726523
+ *              João Gabriel Melo Barbirato     RA: 726546
  */
 #ifndef ARQUIVO_HPP
 #include <iostream>
@@ -301,6 +301,10 @@ void Arquivo::remove(const char * chave, Registro & reg){
     atualizaRCabecalho(); // e atualize o cabeçalho.
 }; //fim remoção
 
+/*  
+ *  MÉTODO compacta
+ *  OBJETIVO: compactar alocando os espaços removidos no final do arquivo. Caso um bloco tenha apenas removidos, remove o bloco.
+ */
 void Arquivo::compacta(){
     Registro rAux;          // aux pra remoção
     RegistroCabecalho rcAux;
@@ -419,102 +423,19 @@ void Arquivo::compacta(){
     }else
         fclose(dados);
         
-};
-
+};// fim compacta
+/*  
+ *  MÉTODO atualizaRCabeçalho
+ *  OBJETIVO: atualizar o registro de cabeçalho em cada operação de alteração (utilzando a veriável do objeto)
+ *  ARGUMENTOS:
+ *      - nomeArquivo: nome do arquivo de dados
+ */
 void Arquivo::atualizaRCabecalho(){
     dados = fopen(nome.c_str(), "r+b");
     fwrite(&rcabecalho, TAM_REG_CABECALHO, 1, dados);
     fclose(dados);
 };
-int main(){
-    int opcao; //variavel que guarda a opcao do menu
-    int repete; //variavel que controla o do-while
-    Arquivo arquivo("Arquivo de Dados");
-    Registro registro;
-    
-    Registro b;
-    Registro a;
-    Registro d;
-    Registro c, aux;
-    
-    sprintf(a.nome, "Gabrieli Santos");
-    sprintf(a.cpf, "41458175839");
-    a.idade = 20;
 
-    sprintf(b.nome, "Gianna Barbirato");
-    sprintf(b.cpf, "01010101010");
-    b.idade = 55;
-
-    sprintf(d.nome, "Micheli Santos");
-    sprintf(d.cpf, "02020202020");
-    d.idade = 17;
-    arquivo.insere(a);
-    arquivo.insere(a);
-    arquivo.insere(a);
-    arquivo.insere(a);
-    arquivo.insere(a);
-    arquivo.insere(a);
-    arquivo.insere(a);
-    arquivo.insere(b);
-    arquivo.insere(d);
-    do{
-        cout << "***MENU DE OPCOES***" << endl << endl;
-        cout << "1. Inserir registro" << endl;
-        cout << "2. Buscar registro" << endl;
-        cout << "3. Remover registro" << endl;
-        cout << "4. Listar registros" << endl;
-        cout << "5. Compactar arquivo" << endl << endl;
-        cout << "Escolha uma opcao: ";
-        cin >> opcao;
-        cout << endl;
-
-        switch (opcao){
-            case 1:
-                cout << "Nome: ";
-                cin.ignore(51, '\n');
-                cin.get(registro.nome, 51);
-                cout << endl;
-                cout << "CPF: ";
-                cin >> registro.cpf;
-                cout << endl;
-                cout << "Idade: ";
-                cin >> registro.idade;
-                cout << endl;
-                arquivo.insere(registro);
-                cout << "O registro foi inserido no Arquivo de Dados!" << endl << endl;
-                break;
-            case 2:
-                cout << "Informe o CPF: ";
-                cin >> registro.cpf;
-                cout << endl;
-                arquivo.busca(registro.cpf, registro);
-                break;
-            case 3:
-                cout << "Informe o CPF: ";
-                cin >> registro.cpf;
-                cout << endl;
-                arquivo.remove(registro.cpf, registro);
-                cout << "O registro foi removido do Arquivo de Dados" << endl;
-                break;
-            case 4:
-                arquivo.lista();
-                break;
-            case 5:
-                arquivo.compacta();
-                cout << "O arquivo foi compactado!" << endl;
-                break;
-            default:
-                cout << "Opcao invalida !!" << endl;
-                cin.ignore(256, '\n');
-        }
-
-        cout << "Voltar ao MENU DE OPCOES? [1 para SIM/2 para NAO]: ";
-        cin >> repete;
-        cout << endl;
-    } while (repete == 1);
-   
-    return 0;
-}
 /*
 */
 #endif
