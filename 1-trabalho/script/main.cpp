@@ -6,7 +6,7 @@ using namespace std;
 int main(){
 	int opcao; //variavel que guarda a opcao do menu
     int repete; //variavel que controla o do-while
-    Arquivo arquivo("Arquivo de Dados");
+    Arquivo arquivo("data/ArquivoDeDados");
     Registro registro;
     
     do{
