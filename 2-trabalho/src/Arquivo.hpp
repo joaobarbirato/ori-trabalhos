@@ -7,6 +7,8 @@
  *              João Gabriel Melo Barbirato     RA: 726546
  */
 #ifndef ARQUIVO_HPP
+#define ARQUIVO_HPP
+
 #include <iostream>
 #include <cstring>
 #include <cstdio>
@@ -55,7 +57,7 @@ class Arquivo{
         // métodos púlicos
         Arquivo(string nomeArquivo);    // construtor
         ~Arquivo();                     // destrutor
-        void insere(const Registro &);  // inserção
+        int insere(const Registro &);  // inserção
         void lista();                   // listagem
         int busca(const char *, Registro &);   // busca
         void remove(const char * chave, Registro &); // remoção
@@ -93,8 +95,9 @@ Arquivo::~Arquivo(){};
  *  ARGUMENTOS:
  *      - nomeArquivo: nome do arquivo de dados
  */
-void Arquivo::insere(const Registro & reg){
+int Arquivo::insere(const Registro & reg){
     int rrn; // variável auxiliar para guardar o rrn quando o algoritmo seguir o fluxo da lista invertida
+    int byteoffset;
 
     dados = fopen(nome.c_str(), "r+b"); // abra o arquivo lógico
 
@@ -117,6 +120,7 @@ void Arquivo::insere(const Registro & reg){
                 fseek(dados, TAM_BLOCO*(rcabecalho.nRegistros/REG_BLOCO) + ((rcabecalho.nRegistros) % (REG_BLOCO))*TAM_REG, SEEK_SET);
         
         // posicionado o ponteiro,
+        byteoffset=ftell(dados);
         fwrite(&reg, TAM_REG, 1, dados); // escreva no registro
 
     }else{ // se há espaços deletados:
@@ -131,6 +135,7 @@ void Arquivo::insere(const Registro & reg){
         fread(&rrn, sizeof(int), 1, dados); // guarde o próximo da lista (novo topo)
         rcabecalho.topo = rrn;
         fseek(dados, -(sizeof('@')+sizeof(int)), SEEK_CUR); // volte o ponteiro
+        byteoffset=ftell(dados);
         fwrite(&reg, TAM_REG, 1, dados); // escreva o registro
         rcabecalho.nRemovidos--;
     }
@@ -138,6 +143,8 @@ void Arquivo::insere(const Registro & reg){
     rcabecalho.nRegistros++; // aumente o número de registros
     fclose(dados); // feche o arquivo lógico
     atualizaRCabecalho(); // e atualize o cabeçalho.
+
+    return byteoffset;
 }; // fim insere
 
 /*  
@@ -435,7 +442,6 @@ void Arquivo::atualizaRCabecalho(){
     fwrite(&rcabecalho, TAM_REG_CABECALHO, 1, dados);
     fclose(dados);
 };
-
 /*
 */
 #endif
